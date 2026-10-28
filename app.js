@@ -883,7 +883,7 @@
     var k = g.join("");
     if (k === fig.last) return;
     fig.last = k;
-    var cv = $("o-fig-c"), S = 72, dpr = window.devicePixelRatio || 1, pitch = S / FN, rad = pitch * 0.37, ctx, i;
+    var cv = $("o-fig-c"), S = 120, dpr = window.devicePixelRatio || 1, pitch = S / FN, rad = pitch * 0.37, ctx, i;
     if (cv.width !== Math.round(S * dpr)) { cv.width = cv.height = Math.round(S * dpr); }
     ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S, S);
     for (i = 0; i < 3; i++) {

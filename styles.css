@@ -254,11 +254,12 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .avatar.sm { width: 36px; height: 36px; font-size: 20px; }
 
 /* översikt */
-.greet { margin-top: 18px; }
+.greet { margin-top: 18px; position: relative; }
 .g-l { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
-.g-row { display: flex; align-items: center; gap: 14px; }
-.fig { width: 72px; height: 72px; flex: none; margin-left: auto; border-radius: 14px; }
-.fig canvas { display: block; width: 72px; height: 72px; }
+.g-row { display: flex; align-items: center; padding-right: 128px; }
+/* the figure stands over the top edge of the card below, half on the page and half on the card */
+.fig { position: absolute; right: -6px; top: 22px; z-index: 3; width: 132px; height: 132px; padding: 6px; border-radius: 24px; background: var(--bg); }
+.fig canvas { display: block; width: 120px; height: 120px; }
 .g-n { margin: 0; flex: 0 1 auto; min-width: 0; white-space: nowrap; font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
 .g-n i { font-style: normal; color: var(--accent); }
 .g-d { margin-top: 10px; font-size: 11px; letter-spacing: .14em; color: var(--mute); }
