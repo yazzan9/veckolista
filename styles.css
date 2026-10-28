@@ -372,6 +372,9 @@ body:has(.tabbar:not([hidden])) .toast { bottom: calc(96px + env(safe-area-inset
 .ck-cap.on::before { content: "● "; }
 .rnd { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); font-size: 18px; flex: none; }
 .rnd:hover { border-color: var(--fg); }
+.ed-move { margin-top: 16px; }
+.ed-move .btn { min-height: 48px; justify-content: space-between; padding: 0 22px; }
+.ed-help { margin: 8px 2px 0; font-size: 10px; line-height: 1.5; letter-spacing: .1em; color: var(--mute); }
 .ed-done { display: flex; align-items: center; gap: 12px; margin-top: 18px; min-height: 40px; font-size: 12px; letter-spacing: .1em; cursor: pointer; }
 .ed-done input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .cb { width: 20px; height: 20px; border: 1.5px solid var(--fg); border-radius: 4px; position: relative; flex: none; }

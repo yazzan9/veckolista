@@ -374,7 +374,7 @@
           dh += '<li class="task' + (t.d ? " done" : "") + (t.d && t.id === pulseId ? " just" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
             '<button class="chk' + (t.id === pulseId ? " pulse" : "") + '" data-act="tog" aria-label="Klar: ' + esc(t.t) + '" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
             '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + '<span class="tt">' + esc(t.t) + "</span></span>" +
-            (past ? "" : '<button class="act' + (ms ? " mvm" : "") + '" data-act="mv" aria-label="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '" title="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '">→</button>' +
+            (past ? "" : (ms ? '<button class="act mvm" data-act="mv" aria-label="Flytta till idag" title="Flytta till idag">→</button>' : "") +
             '<button class="act x" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>' +
             '<button class="swdel" data-act="del" aria-label="Ta bort" tabindex="-1">×</button>') + "</li>";
         });
@@ -483,7 +483,7 @@
       var nc = daysEl.querySelector('.task[data-id="' + id + '"] .chk'); if (nc) nc.focus({ preventScroll: true });
       return;
     }
-    if (act === "mv") moveTask(k2, id, btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)));
+    if (act === "mv") moveTask(k2, id, key(new Date()));
   });
   daysEl.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -574,6 +574,10 @@
     var di = (d.getDay() + 6) % 7;
     $("ed-cap").textContent = ed.time && !settings.remind ? "PÅMINNELSER AV" : ed.time ? "PÅMINNER DIG " + (ed.day === nowK ? "IDAG" : DAYS[di]) : "INGEN PÅMINNELSE";
     $("ed-cap").classList.toggle("on", !!ed.time && settings.remind);
+    var nx = addDays(fromKey(ed.k), 1), from = (fromKey(ed.k).getDay() + 6) % 7;
+    $("ed-move-w").hidden = key(nx) < nowK;
+    $("ed-move-h").textContent = ed.k === nowK ? "FLYTTAR UPPGIFTEN TILL I MORGON. DEN FÖRSVINNER FRÅN IDAG."
+      : "FLYTTAR UPPGIFTEN TILL " + DAYS[(nx.getDay() + 6) % 7] + ". DEN FÖRSVINNER FRÅN " + DAYS[from] + ".";
   }
   function stepTime(min) {
     var p = (ed.time || settings.defTime).split(":"), t = ed.time ? +p[0] * 60 + +p[1] + min : +p[0] * 60 + +p[1];
@@ -604,6 +608,10 @@
     t.d = ed.done;
     if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
     save(); closeEdit(); render();
+  };
+  $("ed-move").onclick = function () {
+    var k = ed.k, id = ed.id, to = key(addDays(fromKey(ed.k), 1));
+    ed.day = ed.k; $("ed-save").click(); moveTask(k, id, to);
   };
   $("ed-del").onclick = function () { var k = ed.k, id = ed.id; closeEdit(); delTask(k, id); };
   $("ed-close").onclick = closeEdit;
