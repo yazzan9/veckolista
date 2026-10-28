@@ -132,6 +132,32 @@
   <section id="days"></section>
 </main>
 
+<!-- Lägg till -->
+<main class="app screen" id="s-add" hidden>
+  <div class="bar">
+    <button class="pill" id="ad-back" aria-label="Tillbaka">←</button>
+    <span class="sp"></span><span class="lblv">NY UPPGIFT</span><span class="sp"></span>
+    <button class="pill" id="ad-today">IDAG</button>
+  </div>
+  <h1 class="ad-day"><span id="ad-name">MÅNDAG</span><i aria-hidden="true">.</i></h1>
+  <div class="ad-sub" id="ad-sub"></div>
+  <form class="ad-card" id="f-add" novalidate>
+    <div class="t-row"><span class="t-l">NY UPPGIFT</span><span class="t-l ad-when" id="ad-when"></span></div>
+    <input id="ad-inp" class="ad-inp" type="text" autocomplete="off" maxlength="140" placeholder="Vad ska göras?" aria-label="Ny uppgift" enterkeyhint="done">
+    <div class="ad-div"></div>
+    <span class="sl">TID = PÅMINNELSE</span>
+    <div class="chips" id="ad-chips">
+      <button type="button" class="chip" data-at="">INGEN</button>
+      <button type="button" class="chip" data-at="09:00">09:00</button>
+      <button type="button" class="chip" data-at="17:00">17:00</button>
+      <button type="button" class="chip" data-at="other">ANNAN TID</button>
+    </div>
+    <input class="tinp" type="time" id="ad-time" aria-label="Annan tid" hidden>
+    <button class="btn pri ad-go" type="submit">LÄGG TILL <span aria-hidden="true">+</span></button>
+  </form>
+  <div class="ad-days" id="ad-days" role="group" aria-label="Välj dag"></div>
+</main>
+
 <!-- Kalender -->
 <div id="cal" class="cal" hidden role="dialog" aria-label="Kalender">
   <div class="calin">

@@ -77,7 +77,7 @@
   }
   function show(name) {
     ["welcome", "login", "signup"].forEach(function (s) { $("s-" + s).hidden = s !== name; });
-    if (name !== "home") { $("s-over").hidden = true; $("s-home").hidden = true; setTabsVisible(false); }
+    if (name !== "home") { $("s-over").hidden = true; $("s-home").hidden = true; $("s-add").hidden = true; document.body.classList.remove("adding"); setTabsVisible(false); }
     window.scrollTo(0, 0);
     if (name === "welcome") renderWelcome();
     if (name === "home") { enterHome(); setTab("over"); }
@@ -88,8 +88,9 @@
   var tab = "over";
   function setTabsVisible(v) { $("tabbar").hidden = !v; document.querySelector(".tabfade").hidden = !v; }
   function setTab(name) {
-    var changed = name !== tab || $("tabbar").hidden;
+    var changed = name !== tab || $("tabbar").hidden || !$("s-add").hidden;
     tab = name;
+    $("s-add").hidden = true; document.body.classList.remove("adding");
     var over = name === "over", scr = $(over ? "s-over" : "s-home");
     $("s-over").hidden = !over; $("s-home").hidden = over;
     setTabsVisible(true);
@@ -182,8 +183,8 @@
     setTab("plan");
   }
   Array.prototype.forEach.call(document.querySelectorAll("[data-plan]"), function (b) { b.onclick = function () { goPlanToday(false); }; });
-  $("o-add").onclick = function () { goPlanToday(true); };
-  $("o-plan").onclick = function () { goPlanToday(true); };
+  $("o-add").onclick = function () { openAdd(key(new Date()), "over"); };
+  $("o-plan").onclick = function () { openAdd(key(new Date()), "over"); };
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
     b.onclick = function () { setTab(b.getAttribute("data-tab")); };
   });
@@ -385,7 +386,8 @@
     var h = e.target.closest("[data-head]");
     if (h) {
       var k = h.getAttribute("data-head");
-      if (weekKind() > 0) { openKey = k; focusKey = k; } else openKey = openKey === k ? null : k;
+      if (weekKind() > 0) { openKey = k; openAdd(k, "plan"); return; }
+      openKey = openKey === k ? null : k;
       render(); return;
     }
     var op = e.target.closest("[data-opt]");
@@ -416,13 +418,73 @@
   daysEl.addEventListener("submit", function (e) {
     e.preventDefault();
     var f = e.target, k = f.getAttribute("data-k"), inp = f.querySelector("input");
-    var v = inp.value.trim(); if (!v) { inp.focus(); return; }
+    var v = inp.value.trim(); if (!v) { openAdd(k, "plan"); return; }
     var nt = { id: uid(), t: v, d: false };
     if (pend.k === k && pend.time) nt.time = pend.time;
     pend = { k: null, time: "", rem: false };
     push(k, nt); save(); focusKey = k; render();
     if (nt.time) toast("TILLAGD · PÅMINNELSE " + nt.time);
   });
+
+  /* ---------- lägg till ---------- */
+  var addKey = null, addFrom = "plan", addTime = "";
+  function openAdd(k, from) {
+    addKey = k; addFrom = from; addTime = "";
+    $("s-over").hidden = true; $("s-home").hidden = true;
+    var s = $("s-add"); s.hidden = false; document.body.classList.add("adding");
+    setTabsVisible(true); window.scrollTo(0, 0);
+    s.classList.remove("slidein"); void s.offsetWidth; s.classList.add("slidein");
+    $("ad-inp").value = ""; $("ad-time").hidden = true;
+    renderAdd(); $("ad-inp").focus();
+  }
+  function closeAdd() {
+    if (addFrom === "plan") { weekStart = mondayOf(fromKey(addKey)); openKey = addKey; }
+    setTab(addFrom);
+  }
+  function renderAdd() {
+    var d = fromKey(addKey), idx = (d.getDay() + 6) % 7, nowK = key(new Date()), n = list(addKey).length, m = mondayOf(d), h = "";
+    $("ad-name").textContent = DAYS[idx];
+    $("ad-sub").textContent = d.getDate() + " " + MON[d.getMonth()] + " · VECKA " + isoWeek(d) + " · " + (n ? plural(n) : "INGA UPPGIFTER ÄNNU");
+    $("ad-when").textContent = (addKey === nowK ? "IDAG" : d.getDate() + " " + MON[d.getMonth()]) + " · " + DAYS[idx];
+    $("ad-today").classList.toggle("on", addKey !== nowK);
+    var other = addTime && addTime !== "09:00" && addTime !== "17:00";
+    Array.prototype.forEach.call($("ad-chips").querySelectorAll("[data-at]"), function (c) {
+      var v = c.getAttribute("data-at"), on = v === "other" ? !!other : v === addTime;
+      c.classList.toggle("sel", on); c.setAttribute("aria-pressed", on);
+    });
+    for (var i = 0; i < 7; i++) {
+      var dk = key(addDays(m, i)), dd = addDays(m, i);
+      h += '<button type="button" class="adday' + (dk === addKey ? " sel" : "") + '" data-ad="' + dk + '" aria-pressed="' + (dk === addKey) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK ? " disabled" : "") + ">" + LET[i] + "</button>";
+    }
+    $("ad-days").innerHTML = h;
+  }
+  $("ad-back").onclick = closeAdd;
+  $("ad-today").onclick = function () { addKey = key(new Date()); renderAdd(); $("ad-inp").focus(); };
+  $("ad-days").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ad]"); if (!b || b.disabled) return;
+    addKey = b.getAttribute("data-ad"); renderAdd(); $("ad-inp").focus();
+  });
+  $("ad-chips").addEventListener("click", function (e) {
+    var c = e.target.closest("[data-at]"); if (!c) return;
+    var v = c.getAttribute("data-at"), ti = $("ad-time");
+    if (v === "other") { ti.hidden = false; if (!ti.value) ti.value = "12:00"; addTime = ti.value; }
+    else { ti.hidden = true; addTime = v; }
+    renderAdd();
+  });
+  $("ad-time").addEventListener("change", function () { addTime = $("ad-time").value; renderAdd(); });
+  $("f-add").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var inp = $("ad-inp"), v = inp.value.trim(); if (!v) { inp.focus(); return; }
+    var nt = { id: uid(), t: v, d: false };
+    if (addTime) nt.time = addTime;
+    push(addKey, nt); save(); inp.value = ""; renderAdd(); inp.focus();
+    toast(nt.time ? "TILLAGD · PÅMINNELSE " + nt.time : "TILLAGD");
+  });
+  if (window.visualViewport) {
+    var vv = window.visualViewport;
+    var kb = function () { document.documentElement.style.setProperty("--kb", Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + "px"); };
+    vv.addEventListener("resize", kb); vv.addEventListener("scroll", kb);
+  }
 
   /* ---------- account ---------- */
   var clearArmed = false;
@@ -475,7 +537,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (!$("settings").hidden) $("settings").hidden = true; else if (!cal.hidden) closeCal();
+    if (!$("settings").hidden) $("settings").hidden = true; else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
 
   /* ---------- start ---------- */

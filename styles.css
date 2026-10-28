@@ -302,4 +302,31 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .act.mvm { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 .act.mvm:hover { background: var(--accent); color: var(--on-accent); filter: brightness(1.06); }
 .chk:disabled { cursor: default; }
+/* lägg till */
+#s-add .lblv { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
+.ad-day { margin: 30px 0 0; font-family: var(--f-display); font-weight: 800; font-size: 56px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
+.ad-day i { font-style: normal; color: var(--accent); }
+.ad-sub { margin-top: 8px; font-size: 10px; letter-spacing: .12em; color: var(--mute); }
+.ad-card { background: var(--surface); border-radius: 22px; padding: 16px 18px 18px; margin-top: 18px; }
+.ad-card .t-row { min-height: 0; }
+.ad-when { color: var(--accent); }
+.ad-inp { display: block; width: 100%; min-width: 0; background: transparent; border: 0; color: var(--fg); font-family: var(--f-display); font-weight: 800; font-size: 40px; line-height: 1.15; text-transform: uppercase; letter-spacing: .005em; caret-color: var(--accent); padding: 0; margin: 18px 0 16px; }
+.ad-inp::placeholder { color: var(--mute); opacity: .6; }
+.ad-inp:focus-visible { outline: none; }
+.ad-div { border-top: 1px dashed var(--line); margin-bottom: 14px; }
+.chip { min-height: 36px; }
+.ad-card .chips { flex-wrap: nowrap; gap: 7px; }
+.ad-card .chip { padding: 0 12px; letter-spacing: .04em; white-space: nowrap; }
+.ad-card .tinp { margin-top: 10px; }
+.ad-go { margin-top: 18px; min-height: 54px; }
+.ad-days { display: flex; justify-content: space-between; gap: 4px; margin-top: 14px; }
+.adday { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); font-size: 11px; letter-spacing: .06em; flex: none; }
+.adday.sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.adday:disabled:not(.sel) { opacity: .35; cursor: default; }
+body.adding .tabfade { display: none; }
+body.adding .tabbar { bottom: max(calc(20px + env(safe-area-inset-bottom, 0px)), calc(var(--kb, 0px) + 8px)); }
+body:has(.tabbar:not([hidden])) .toast { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+.screen.slidein { animation: slidein .3s ease-out; }
+@keyframes slidein { from { transform: translateY(48px); opacity: 0; } to { transform: none; opacity: 1; } }
+
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }
