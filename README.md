@@ -26,7 +26,7 @@ npx serve .
 
 Login is a local prototype. Accounts and tasks are stored in the browser (`localStorage`) and do not sync between devices. Password hashing is SHA-256 in the browser and is for demo purposes only.
 
-Demo account: `anna@epost.se` / `veckolista1`
+Demo account: `yazan@epost.se` / `veckolista1`
 
 Reminders are only shown (bell icon), not delivered as notifications.
 
