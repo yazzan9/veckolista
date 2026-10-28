@@ -127,7 +127,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .day:not(.open) .dayhead { padding-inline: 2px; }
 .name { font-family: var(--f-display); font-weight: 800; font-size: 40px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
 .meta { font-size: 11px; letter-spacing: .1em; color: var(--mute); white-space: nowrap; }
-.meta .now { color: var(--accent); }
+.meta .now, .meta .miss { color: var(--accent); }
 
 ul.tasks { list-style: none; margin: 0; padding: 0; }
 .task { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px dashed var(--line); }
@@ -297,7 +297,7 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .wk .grid3 { grid-area: g; }
 .sum .miss { color: var(--accent); }
 .sum .fin { color: var(--fg); }
-.missbar { font-size: 10px; letter-spacing: .12em; color: var(--accent); padding: 2px 0 10px; }
+.missbar { font-size: 10px; letter-spacing: .06em; white-space: nowrap; color: var(--accent); padding: 2px 0 10px; }
 .task.missed .txt { color: var(--mute); }
 .act.mvm { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 .act.mvm:hover { background: var(--accent); color: var(--on-accent); filter: brightness(1.06); }

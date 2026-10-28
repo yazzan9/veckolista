@@ -259,7 +259,7 @@
   /* ---------- home ---------- */
   function enterHome() {
     today = new Date(); todayKey = key(today);
-    weekStart = mondayOf(today); openKey = todayKey;
+    weekStart = mondayOf(today); openKey = firstMissedOr(todayKey);
     var u = cur();
     $("over-prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
     render();
@@ -269,6 +269,11 @@
       if (a.time && b.time) return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
       return a.time ? -1 : b.time ? 1 : 0;
     });
+  }
+  function firstMissedOr(k) {
+    var nowK = key(new Date()), m = mondayOf(new Date());
+    for (var i = 0; i < 7; i++) { var dk = key(addDays(m, i)); if (dk >= nowK) break; if (list(dk).some(function (t) { return !t.d; })) return dk; }
+    return k;
   }
   function weekKind() { var cm = key(mondayOf(new Date())), w = key(weekStart); return w < cm ? -1 : w > cm ? 1 : 0; }
   function render() {
@@ -280,7 +285,7 @@
     $("wknum").textContent = pad(isoWeek(weekStart));
     var a = dates[0], b = dates[6];
     $("range").textContent = a.getDate() + " " + MON[a.getMonth()] + " – " + b.getDate() + " " + MON[b.getMonth()] + " " + addDays(weekStart, 3).getFullYear();
-    var none = totalTasks() === 0, head = future || none;
+    var none = totalTasks() === 0, head = !past && (future || none);
     $("hello").hidden = !head; $("range").hidden = head;
     if (future) { $("hello-n").innerHTML = (ahead === 1 ? "NÄSTA VECKA" : "OM " + ahead + " VECKOR") + "<em>!</em>"; $("hello-s").textContent = "PLANERA I FÖRTID"; }
     else if (none) { $("hello-n").innerHTML = "HEJ " + esc(u.name.split(" ")[0].toUpperCase()) + "<em>!</em>"; $("hello-s").textContent = "DIN FÖRSTA VECKA BÖRJAR HÄR"; }
@@ -298,10 +303,10 @@
         ts.slice(0, MAXDOTS).forEach(function (t) { dots += '<span class="dot' + (t.d ? " done" : "") + '"></span>'; });
         if (ts.length > MAXDOTS) dots += '<span class="more">+' + (ts.length - MAXDOTS) + "</span>";
       }
-      mh += '<button class="mcol' + (isToday ? " today" : "") + (k === openKey ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
+      mh += '<button class="mcol' + (isToday ? " today" : "") + (k === openKey || (future && idx === 0) ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
 
       var open = k === openKey, dn = ts.filter(function (t) { return t.d; }).length;
-      var meta = (isToday ? '<span class="now">IDAG</span> · ' : k === ydK && kind === 0 ? "IGÅR · " : "") + d.getDate() + " " + MON[d.getMonth()] + (ts.length ? " · " + dn + "/" + ts.length : "");
+      var meta = (isToday ? '<span class="now">IDAG</span> · ' : k === ydK && kind === 0 ? "IGÅR · " : "") + d.getDate() + " " + MON[d.getMonth()] + (mn && !open ? ' · <span class="miss">' + mn + " MISSADE</span>" : ts.length ? " · " + dn + "/" + ts.length : "");
       dh += '<div class="day' + (open ? " open" : "") + '"><button class="dayhead" data-head="' + k + '" aria-expanded="' + open + '"><span class="name">' + DAYS[idx] + '</span><span class="meta">' + meta + "</span></button>";
       if (open) {
         var allDone = ts.length > 0 && dn === ts.length;
@@ -351,12 +356,12 @@
   function setWeek(ws) {
     weekStart = ws;
     var mk = key(ws), end = key(addDays(ws, 6));
-    openKey = (todayKey >= mk && todayKey <= end) ? todayKey : mk > todayKey ? null : mk;
+    openKey = (todayKey >= mk && todayKey <= end) ? firstMissedOr(todayKey) : mk > todayKey ? null : mk;
     render();
   }
   $("prev").onclick = function () { setWeek(addDays(weekStart, -7)); };
   $("next").onclick = function () { setWeek(addDays(weekStart, 7)); };
-  $("today").onclick = function () { todayKey = key(new Date()); setWeek(mondayOf(new Date())); openKey = todayKey; render(); };
+  $("today").onclick = function () { todayKey = key(new Date()); setWeek(mondayOf(new Date())); };
 
   $("matrix").addEventListener("click", function (e) {
     var b = e.target.closest("[data-pick]"); if (!b) return;
