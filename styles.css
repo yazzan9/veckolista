@@ -221,5 +221,17 @@ ul.tasks { list-style: none; margin: 0; padding: 0; }
 .acct .nm { font-family: var(--f-display); font-weight: 800; font-size: 28px; line-height: 1; text-transform: uppercase; }
 .toast { position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 12px 18px; border-radius: 22px; font-size: 11px; letter-spacing: .1em; z-index: 60; max-width: calc(100% - 32px); text-align: center; }
 
+/* tab bar: fixed, content scrolls behind a solid band with a gradient edge */
+body:has(.tabbar:not([hidden])) { padding-bottom: 140px; }
+.tabfade { position: fixed; left: 0; right: 0; bottom: 0; height: 130px; z-index: 25; pointer-events: none; background: linear-gradient(to bottom, transparent 0, var(--bg) 30px); }
+.tabbar { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 26; display: flex; align-items: center; gap: 0; width: min(350px, calc(100% - 40px)); height: 60px; padding: 6px; border-radius: 30px; background: var(--surface); border: 1px solid var(--line); }
+.tab { flex: 1; height: 100%; min-height: 40px; border-radius: 24px; font-size: 11px; letter-spacing: .18em; color: var(--mute); transition: background .18s, color .18s; }
+.tab.on { background: var(--fg); color: var(--bg); }
+body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .tabfade, body:has(#cal:not([hidden])) .tabbar, body:has(#cal:not([hidden])) .tabfade { display: none; }
+.screen.tabin { animation: tabin .18s ease-out; }
+@keyframes tabin { from { opacity: 0; } to { opacity: 1; } }
+.avatar.sm { width: 36px; height: 36px; font-size: 20px; }
+#s-over .lblv { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
+
 @media (max-width: 380px) { .wk .num { font-size: 88px; } .name { font-size: 34px; } .calmonth { font-size: 36px; } .calyear { font-size: 72px; } .wel .big { font-size: 180px; } .ac-n { font-size: 120px; } .ac-t b { font-size: 40px; } .ttl { font-size: 48px; } }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

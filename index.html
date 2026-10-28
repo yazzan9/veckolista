@@ -59,7 +59,17 @@
   <div class="foot">HAR DU REDAN KONTO? <button data-go="login">LOGGA IN</button></div>
 </main>
 
-<!-- Huvudsida -->
+<!-- Översikt -->
+<main class="app screen" id="s-over" hidden>
+  <div class="bar">
+    <span class="lblv">VECKOLISTA</span>
+    <span class="sp"></span>
+    <button class="pill themebtn" aria-label="Byt tema">AUTO</button>
+    <button class="avatar sm" id="over-prof" aria-label="Inställningar">A</button>
+  </div>
+</main>
+
+<!-- Huvudsida (Plan) -->
 <main class="app screen" id="s-home" hidden>
   <div class="bar">
     <button class="pill" id="prev" aria-label="Förra veckan">←</button>
@@ -106,6 +116,12 @@
     <button class="btn pri" id="st-out">Logga ut</button>
   </div>
 </div>
+
+<div class="tabfade" aria-hidden="true" hidden></div>
+<nav class="tabbar" id="tabbar" aria-label="Huvudmeny" hidden>
+  <button class="tab" data-tab="over">ÖVERSIKT</button>
+  <button class="tab" data-tab="plan">PLAN</button>
+</nav>
 
 <div id="toast" class="toast" hidden role="status"></div>
 

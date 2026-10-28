@@ -76,13 +76,35 @@
     clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 2400);
   }
   function show(name) {
-    ["welcome", "login", "signup", "home"].forEach(function (s) { $("s-" + s).hidden = s !== name; });
+    ["welcome", "login", "signup"].forEach(function (s) { $("s-" + s).hidden = s !== name; });
+    if (name !== "home") { $("s-over").hidden = true; $("s-home").hidden = true; setTabsVisible(false); }
     window.scrollTo(0, 0);
     if (name === "welcome") renderWelcome();
-    if (name === "home") enterHome();
+    if (name === "home") { enterHome(); setTab("over"); }
     if (name === "login") { $("li-err").textContent = ""; $("li-f1").classList.remove("bad"); $("li-f2").classList.remove("bad"); }
     if (name === "signup") { $("su-err").textContent = ""; ["su-f1", "su-f2", "su-f3"].forEach(function (i) { $(i).classList.remove("bad"); }); }
   }
+  /* ---------- tabs ---------- */
+  var tab = "over";
+  function setTabsVisible(v) { $("tabbar").hidden = !v; document.querySelector(".tabfade").hidden = !v; }
+  function setTab(name) {
+    var changed = name !== tab || $("tabbar").hidden;
+    tab = name;
+    var over = name === "over", scr = $(over ? "s-over" : "s-home");
+    $("s-over").hidden = !over; $("s-home").hidden = over;
+    setTabsVisible(true);
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
+      var on = b.getAttribute("data-tab") === name;
+      b.classList.toggle("on", on);
+      if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    if (changed) { window.scrollTo(0, 0); scr.classList.remove("tabin"); void scr.offsetWidth; scr.classList.add("tabin"); }
+    if (!over) render();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
+    b.onclick = function () { setTab(b.getAttribute("data-tab")); };
+  });
+
   Array.prototype.forEach.call(document.querySelectorAll("[data-go]"), function (b) { b.onclick = function () { show(b.getAttribute("data-go")); }; });
   $("wl-login").onclick = function () { show("login"); };
   $("wl-signup").onclick = function () { show("signup"); };
@@ -156,7 +178,7 @@
     today = new Date(); todayKey = key(today);
     weekStart = mondayOf(today); openKey = todayKey;
     var u = cur();
-    $("prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
+    $("prof").textContent = $("over-prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
     render();
   }
   function sorted(ts) {
@@ -304,6 +326,7 @@
     clearArmed = false; $("st-clear").textContent = "Rensa alla uppgifter"; $("settings").hidden = false;
   }
   $("prof").onclick = openSettings;
+  $("over-prof").onclick = openSettings;
   $("st-close").onclick = function () { $("settings").hidden = true; };
   $("settings").addEventListener("click", function (e) { if (e.target === $("settings")) $("settings").hidden = true; });
   $("st-clear").onclick = function () {
