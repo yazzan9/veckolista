@@ -188,6 +188,39 @@
   </div>
 </div>
 
+<!-- Redigera uppgift -->
+<div id="edit" class="ov" hidden>
+  <div class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="ed-lbl">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="bar"><span class="t-l" id="ed-lbl">REDIGERA UPPGIFT</span><span class="sp"></span><button class="pill rnd" id="ed-close" aria-label="Stäng">×</button></div>
+    <input id="ed-title" class="ed-title" type="text" maxlength="140" autocomplete="off" aria-label="Titel">
+    <div class="ed-sec">
+      <div class="ed-row"><span class="t-l">DAG</span><span class="t-l" id="ed-wk"></span></div>
+      <div class="ad-days" id="ed-days" role="group" aria-label="Dag"></div>
+    </div>
+    <div class="ed-sec">
+      <span class="t-l">TID = PÅMINNELSE</span>
+      <div class="chips ed-chips" id="ed-chips">
+        <button type="button" class="chip" data-et="">INGEN</button>
+        <button type="button" class="chip" data-et="09:00">09:00</button>
+        <button type="button" class="chip" data-et="12:00">12:00</button>
+        <button type="button" class="chip" data-et="18:00">18:00</button>
+        <button type="button" class="chip" data-et="other">ANNAN</button>
+      </div>
+      <input class="tinp" type="time" id="ed-time" aria-label="Annan tid" hidden>
+    </div>
+    <div class="clock">
+      <div class="ck-l"><div class="ck" id="ed-clock" aria-live="polite">--:--</div><div class="ck-cap" id="ed-cap"></div></div>
+      <button type="button" class="rnd" id="ed-minus" aria-label="15 minuter tidigare">−</button>
+      <button type="button" class="rnd" id="ed-plus" aria-label="15 minuter senare">+</button>
+    </div>
+    <label class="ed-done"><input type="checkbox" id="ed-done"><span class="cb" aria-hidden="true"></span>MARKERA SOM KLAR</label>
+    <div class="ed-acts"><button type="button" class="btn out warn" id="ed-del">TA BORT</button><button type="button" class="btn pri" id="ed-save">SPARA</button></div>
+  </div>
+</div>
+
+<div id="undo" class="undo" hidden role="status"><i aria-hidden="true"></i><span id="undo-t"></span><button type="button" id="undo-b">ÅNGRA</button></div>
+
 <div class="tabfade" aria-hidden="true" hidden></div>
 <nav class="tabbar" id="tabbar" aria-label="Huvudmeny" hidden>
   <button class="tab" data-tab="over">ÖVERSIKT</button>

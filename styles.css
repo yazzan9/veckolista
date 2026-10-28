@@ -329,4 +329,48 @@ body:has(.tabbar:not([hidden])) .toast { bottom: calc(96px + env(safe-area-inset
 .screen.slidein { animation: slidein .3s ease-out; }
 @keyframes slidein { from { transform: translateY(48px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+/* redigera uppgift, svep och ångra */
+.sheet { border-radius: 36px 36px 0 0; gap: 0; padding-top: 10px; touch-action: pan-y; transition: transform .2s; }
+.grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 18px; }
+.sheet .bar .t-l { font-size: 10px; }
+.pill.rnd { width: 42px; height: 42px; border-radius: 50%; padding: 0; font-size: 18px; }
+.ed-title { display: block; width: 100%; min-width: 0; background: transparent; border: 0; border-bottom: 1px dashed var(--line); color: var(--fg); font-family: var(--f-display); font-weight: 800; font-size: 48px; line-height: 1.1; text-transform: uppercase; letter-spacing: .005em; caret-color: var(--accent); padding: 18px 0 14px; }
+.ed-title:focus-visible { outline: none; border-bottom-color: var(--accent); }
+.ed-sec { margin-top: 18px; }
+.ed-sec > .t-l { display: block; margin-bottom: 12px; }
+.ed-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.ed-sec .ad-days { margin-top: 0; }
+.ed-chips { flex-wrap: nowrap; gap: 7px; }
+.ed-chips .chip { flex: 1; padding: 0 6px; letter-spacing: .04em; white-space: nowrap; }
+.ed-sec .tinp { margin-top: 10px; }
+.clock { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 22px; padding: 16px 18px; margin-top: 16px; }
+.ck-l { flex: 1; min-width: 0; }
+.ck { font-family: var(--f-dot); font-weight: 800; font-size: 60px; line-height: .9; letter-spacing: .02em; }
+.ck-cap { margin-top: 6px; font-size: 10px; letter-spacing: .1em; color: var(--mute); }
+.ck-cap.on { color: var(--accent); }
+.ck-cap.on::before { content: "● "; }
+.rnd { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); font-size: 18px; flex: none; }
+.rnd:hover { border-color: var(--fg); }
+.ed-done { display: flex; align-items: center; gap: 12px; margin-top: 18px; min-height: 40px; font-size: 12px; letter-spacing: .1em; cursor: pointer; }
+.ed-done input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.cb { width: 20px; height: 20px; border: 1.5px solid var(--fg); border-radius: 4px; position: relative; flex: none; }
+.ed-done input:checked + .cb { background: var(--accent); border-color: var(--accent); }
+.ed-done input:checked + .cb::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--on-accent); border-width: 0 2px 2px 0; transform: rotate(40deg); }
+.ed-done input:focus-visible + .cb { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ed-acts { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 14px; }
+.ed-acts .btn { min-height: 50px; }
+.btn.out.warn { border-color: var(--accent); color: var(--accent); }
+body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { display: none; }
+
+.day.open { overflow: hidden; }
+.task { position: relative; touch-action: pan-y; transition: transform .2s; }
+.task.swiped { transform: translateX(-40px); }
+.swdel { position: absolute; right: -52px; top: 50%; width: 46px; height: 40px; margin-top: -20px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-size: 18px; visibility: hidden; }
+.task.swiped .swdel { visibility: visible; }
+
+.undo { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: min(350px, calc(100% - 40px)); min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 22px; border-radius: 26px; background: var(--fg); color: var(--bg); font-size: 11px; letter-spacing: .1em; }
+.undo i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
+.undo span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.undo button { height: 40px; padding: 0 18px; border-radius: 20px; background: var(--accent); color: var(--on-accent); font-size: 11px; letter-spacing: .12em; flex: none; }
+
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }

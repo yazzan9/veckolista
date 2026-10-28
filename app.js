@@ -320,7 +320,8 @@
             '<button class="chk" data-act="tog" aria-label="Bocka av" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
             '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + esc(t.t) + "</span>" +
             (past ? "" : '<button class="act' + (ms ? " mvm" : "") + '" data-act="mv" aria-label="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '" title="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '">→</button>' +
-            '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>') + "</li>";
+            '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>' +
+            '<button class="swdel" data-act="del" aria-label="Ta bort" tabindex="-1">×</button>') + "</li>";
         });
         dh += "</ul>";
         if (past) {
@@ -383,6 +384,11 @@
   }
   var daysEl = $("days");
   daysEl.addEventListener("click", function (e) {
+    var swl = daysEl.querySelector(".task.swiped");
+    if (swl && !e.target.closest(".swdel")) { swl.classList.remove("swiped"); if (swl.contains(e.target)) return; }
+    if (Date.now() < swUntil) return;
+    var row = e.target.closest(".task");
+    if (row && !e.target.closest("button") && weekKind() >= 0) { openEdit(row.getAttribute("data-k"), row.getAttribute("data-id")); return; }
     var h = e.target.closest("[data-head]");
     if (h) {
       var k = h.getAttribute("data-head");
@@ -406,8 +412,8 @@
     var arr = list(k2), idx = arr.findIndex(function (t) { return t.id === id; });
     if (idx < 0) return;
     var act = btn.getAttribute("data-act");
+    if (act === "del") { delTask(k2, id); return; }
     if (act === "tog") arr[idx].d = !arr[idx].d;
-    else if (act === "del") arr.splice(idx, 1);
     else if (act === "mv") { var t = arr.splice(idx, 1)[0], nk2 = btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)); push(nk2, t); }
     allTasks()[k2] = arr; save(); render();
   });
@@ -425,6 +431,118 @@
     push(k, nt); save(); focusKey = k; render();
     if (nt.time) toast("TILLAGD · PÅMINNELSE " + nt.time);
   });
+
+  /* ---------- swipe, delete, undo ---------- */
+  var sw = null, swUntil = 0;
+  daysEl.addEventListener("pointerdown", function (e) {
+    var li = e.target.closest(".task");
+    sw = li && weekKind() >= 0 && !e.target.closest(".swdel") ? { li: li, x: e.clientX, y: e.clientY } : null;
+  });
+  daysEl.addEventListener("pointermove", function (e) {
+    if (!sw) return;
+    var dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    if (Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }
+    if (dx < -30 || dx > 30) {
+      Array.prototype.forEach.call(daysEl.querySelectorAll(".task.swiped"), function (o) { if (o !== sw.li) o.classList.remove("swiped"); });
+      sw.li.classList.toggle("swiped", dx < 0); swUntil = Date.now() + 350; sw = null;
+    }
+  });
+  ["pointerup", "pointercancel"].forEach(function (ev) { daysEl.addEventListener(ev, function () { sw = null; }); });
+
+  var undoT = null, lastDel = null;
+  function delTask(k, id) {
+    var arr = list(k), idx = arr.findIndex(function (t) { return t.id === id; });
+    if (idx < 0) return;
+    lastDel = { k: k, idx: idx, t: arr.splice(idx, 1)[0] };
+    allTasks()[k] = arr; save(); render();
+    $("toast").hidden = true;
+    $("undo-t").textContent = lastDel.t.t.toUpperCase() + " BORTTAGEN";
+    $("undo").hidden = false;
+    clearTimeout(undoT); undoT = setTimeout(function () { $("undo").hidden = true; lastDel = null; }, 6000);
+  }
+  $("undo-b").onclick = function () {
+    if (!lastDel) return;
+    var arr = list(lastDel.k); arr.splice(Math.min(lastDel.idx, arr.length), 0, lastDel.t);
+    allTasks()[lastDel.k] = arr; lastDel = null; save(); render();
+    clearTimeout(undoT); $("undo").hidden = true;
+  };
+
+  /* ---------- redigera uppgift ---------- */
+  var ed = null, ED_CHIPS = ["09:00", "12:00", "18:00"];
+  function openEdit(k, id) {
+    var t = list(k).filter(function (x) { return x.id === id; })[0]; if (!t) return;
+    ed = { k: k, id: id, day: k, time: t.time || "", done: !!t.d };
+    $("ed-title").value = t.t; $("ed-done").checked = ed.done; $("ed-time").hidden = true;
+    renderEdit(); $("edit").hidden = false; $("ed-title").focus();
+  }
+  function closeEdit() { $("edit").hidden = true; ed = null; }
+  function renderEdit() {
+    var d = fromKey(ed.day), m = mondayOf(d), nowK = key(new Date()), h = "", i;
+    $("ed-wk").textContent = "VECKA " + isoWeek(d);
+    for (i = 0; i < 7; i++) {
+      var dd = addDays(m, i), dk = key(dd);
+      h += '<button type="button" class="adday' + (dk === ed.day ? " sel" : "") + '" data-ed="' + dk + '" aria-pressed="' + (dk === ed.day) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK && dk !== ed.k ? " disabled" : "") + ">" + LET[i] + "</button>";
+    }
+    $("ed-days").innerHTML = h;
+    var other = ed.time && ED_CHIPS.indexOf(ed.time) < 0;
+    Array.prototype.forEach.call($("ed-chips").querySelectorAll("[data-et]"), function (c) {
+      var v = c.getAttribute("data-et"), on = v === "other" ? !!other : v === ed.time;
+      c.classList.toggle("sel", on); c.setAttribute("aria-pressed", on);
+    });
+    $("ed-clock").textContent = ed.time || "--:--";
+    var di = (d.getDay() + 6) % 7;
+    $("ed-cap").textContent = ed.time ? "PÅMINNER DIG " + (ed.day === nowK ? "IDAG" : DAYS[di]) : "INGEN PÅMINNELSE";
+    $("ed-cap").classList.toggle("on", !!ed.time);
+  }
+  function stepTime(min) {
+    var p = (ed.time || "09:00").split(":"), t = ed.time ? +p[0] * 60 + +p[1] + min : +p[0] * 60 + +p[1];
+    t = (Math.round(t / 15) * 15 + 1440) % 1440;
+    ed.time = pad(Math.floor(t / 60)) + ":" + pad(t % 60); renderEdit();
+  }
+  $("ed-minus").onclick = function () { stepTime(-15); };
+  $("ed-plus").onclick = function () { stepTime(15); };
+  $("ed-days").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ed]"); if (!b || b.disabled) return;
+    ed.day = b.getAttribute("data-ed"); renderEdit();
+  });
+  $("ed-chips").addEventListener("click", function (e) {
+    var c = e.target.closest("[data-et]"); if (!c) return;
+    var v = c.getAttribute("data-et"), ti = $("ed-time");
+    if (v === "other") { ti.hidden = false; ti.value = ed.time || "12:00"; ed.time = ti.value; }
+    else { ti.hidden = true; ed.time = v; }
+    renderEdit();
+  });
+  $("ed-time").addEventListener("change", function () { ed.time = $("ed-time").value; renderEdit(); });
+  $("ed-done").addEventListener("change", function () { ed.done = $("ed-done").checked; });
+  $("ed-save").onclick = function () {
+    var arr = list(ed.k), idx = arr.findIndex(function (t) { return t.id === ed.id; }); if (idx < 0) { closeEdit(); return; }
+    var t = arr[idx], v = $("ed-title").value.trim();
+    if (v) t.t = v;
+    if (ed.time) t.time = ed.time; else delete t.time;
+    t.d = ed.done;
+    if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
+    save(); closeEdit(); render();
+  };
+  $("ed-del").onclick = function () { var k = ed.k, id = ed.id; closeEdit(); delTask(k, id); };
+  $("ed-close").onclick = closeEdit;
+  $("ed-title").addEventListener("keydown", function (e) { if (e.key === "Enter") $("ed-save").click(); });
+  $("edit").addEventListener("click", function (e) { if (e.target === $("edit")) closeEdit(); });
+
+  /* sheets close on a downward swipe */
+  function swipeDown(panel, close, canStart) {
+    var y0 = null, dy = 0;
+    panel.addEventListener("pointerdown", function (e) {
+      if (e.target.closest("input, button, select, label") || (canStart && !canStart())) return;
+      y0 = e.clientY; dy = 0;
+    });
+    panel.addEventListener("pointermove", function (e) {
+      if (y0 === null) return;
+      dy = Math.max(0, e.clientY - y0); panel.style.transform = dy ? "translateY(" + dy + "px)" : "";
+    });
+    function end() { if (y0 === null) return; y0 = null; panel.style.transform = ""; if (dy > 90) close(); dy = 0; }
+    panel.addEventListener("pointerup", end); panel.addEventListener("pointercancel", end);
+  }
+  swipeDown(document.querySelector("#edit .panel"), closeEdit);
 
   /* ---------- lägg till ---------- */
   var addKey = null, addFrom = "plan", addTime = "";
@@ -537,7 +655,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (!$("settings").hidden) $("settings").hidden = true; else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
+    if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) $("settings").hidden = true; else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
 
   /* ---------- start ---------- */
