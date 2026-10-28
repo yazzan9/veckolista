@@ -790,17 +790,43 @@
   });
 
   /* ---------- figur: a 9x9 dot-matrix companion next to the name ----------
-     each figure maps time (ms) to 81 dots: 0 off (dotOff), 1 on (fg), 2 accent (max one) */
-  var FN = 9, FC = 4;
+     each figure maps time (ms) to 81 dots: 0 off (dotOff), 1 on (fg), 2 accent */
+  var FN = 9;
   function fgrid() { return new Uint8Array(FN * FN); }
   function fput(g, x, y, v) { if (x >= 0 && y >= 0 && x < FN && y < FN && g[y * FN + x] < v) g[y * FN + x] = v; }
-  function fline(g, x0, y0, x1, y1) {
-    var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
-    for (;;) { fput(g, x0, y0, 1); if (x0 === x1 && y0 === y1) return; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+  /* pixel art rows: "x" on (fg), "o" accent, anything else off */
+  function fart(g, rows, dx, dy) {
+    for (var y = 0; y < rows.length; y++) for (var x = 0; x < rows[y].length; x++) {
+      var ch = rows[y].charAt(x);
+      if (ch === "x") fput(g, x + (dx || 0), y + (dy || 0), 1); else if (ch === "o") fput(g, x + (dx || 0), y + (dy || 0), 2);
+    }
   }
-  function fring(a, r) { return [Math.round(FC + r * Math.sin(a)), Math.round(FC - r * Math.cos(a))]; }
+  function fpose(rows) { var g = fgrid(); fart(g, rows, 0, 0); return g; }
 
-  /* ROBOT: eyes glance around in steps, blink, smile; the antenna leans with the gaze */
+  /* PERSON: jumping jacks with orange hands, then a wave */
+  var P_STAND = ["...xxx...", "...xxx...", "..xxxxx..", ".x..x..x.", ".o..x..o.", "....x....", "...x.x...", "...x.x...", "...x.x..."];
+  var P_JUMP = ["o..xxx..o", ".x.xxx.x.", "..xxxxx..", "....x....", "....x....", "...x.x...", "..x...x..", ".x.....x.", "........."];
+  var P_WAVE1 = ["...xxx.o.", "...xxx.x.", "..xxxxx..", ".x..x....", ".o..x....", "....x....", "...x.x...", "...x.x...", "...x.x..."];
+  var P_WAVE2 = ["...xxx..o", "...xxx.x.", "..xxxxx..", ".x..x....", ".o..x....", "....x....", "...x.x...", "...x.x...", "...x.x..."];
+  function figPerson(t) {
+    var c = t % 5200;
+    if (c < 2800) return fpose(Math.floor(c / 280) % 2 ? P_JUMP : P_STAND);
+    if (c < 4600) return fpose(Math.floor(c / 220) % 2 ? P_WAVE2 : P_WAVE1);
+    return fpose(P_STAND);
+  }
+
+  /* HUND: trots with a wagging orange tail, stops to pant with an orange tongue */
+  var D_TROT1 = [".........", ".....x...", "o....xx..", ".x...xxxx", "..xxxxx..", "..xxxxx..", "..x...x..", ".x.....x.", "........."];
+  var D_TROT2 = [".........", ".....x...", ".....xx..", ".x...xxxx", "o.xxxxx..", "..xxxxx..", "..x...x..", "...x.x...", "........."];
+  var D_PANT1 = [".........", ".....x...", "o....xx..", ".x...xxxx", "..xxxxx.o", "..xxxxx..", "..x...x..", "..x...x..", "........."];
+  var D_PANT2 = [".........", ".....x...", ".....xx..", ".x...xxxx", "o.xxxxx..", "..xxxxx..", "..x...x..", "..x...x..", "........."];
+  function figDog(t) {
+    var c = t % 4800;
+    if (c < 2880) { var s = Math.floor(c / 160); return fpose(s % 2 ? D_TROT2 : D_TROT1); }
+    return fpose(Math.floor(c / 200) % 2 ? D_PANT2 : D_PANT1);
+  }
+
+  /* ROBOT: eyes glance around in steps and blink; orange antenna leans with the gaze, orange mouth when it talks */
   var GAZE = [[0, 0], [-1, 0], [-1, 0], [0, 0], [1, 0], [1, -1], [0, 0], [0, 0]];
   function figRobot(t) {
     var g = fgrid(), c = t % 6400, ph = Math.floor(c / 800), p = GAZE[ph], blink = c % 3200 > 3060, x;
@@ -808,54 +834,34 @@
       fput(g, ex + p[0], 4 + p[1], 1); fput(g, ex + 1 + p[0], 4 + p[1], 1);
       if (!blink) { fput(g, ex + p[0], 3 + p[1], 1); fput(g, ex + 1 + p[0], 3 + p[1], 1); }
     });
-    if (ph === 6) { fput(g, 2, 6, 1); fput(g, 6, 6, 1); for (x = 3; x <= 5; x++) fput(g, x, 7, 1); }
-    else if (ph === 4 && Math.floor(t / 150) % 2) { for (x = 3; x <= 5; x++) { fput(g, x, 6, 1); fput(g, x, 8, 1); } }
+    if (ph === 6) { fput(g, 2, 6, 2); fput(g, 6, 6, 2); for (x = 3; x <= 5; x++) fput(g, x, 7, 1); }
+    else if (ph === 4 && Math.floor(t / 150) % 2) { for (x = 3; x <= 5; x++) { fput(g, x, 6, 2); fput(g, x, 8, 2); } }
     else for (x = 3; x <= 5; x++) fput(g, x, 7, 1);
     fput(g, 4, 1, 1); fput(g, 4 + p[0], 0, 2);
     return g;
   }
-  /* KLOCKA: the real time; four marks, two hands, the second ticks round the rim as the accent */
-  function figClock() {
-    var g = fgrid(), d = new Date(), i, s;
-    for (i = 0; i < 4; i++) { s = fring(i * Math.PI / 2, 4); fput(g, s[0], s[1], 1); }
-    s = fring(((d.getHours() % 12) + d.getMinutes() / 60) * Math.PI / 6, 2); fline(g, FC, FC, s[0], s[1]);
-    s = fring(d.getMinutes() * Math.PI / 30, 3); fline(g, FC, FC, s[0], s[1]);
-    s = fring(d.getSeconds() * Math.PI / 30, 4); fput(g, s[0], s[1], 2);
+
+  /* KATT: orange eyes that look around and blink slowly, an ear that twitches */
+  var CAT = [".x.....x.", ".xx...xx.", ".xxxxxxx.", ".x.....x.", ".x.....x.", "xx..x..xx", ".x.x.x.x.", "x.xxxxx.x", "........."];
+  var CAT_LOOK = [0, -1, -1, 0, 1, 1, 0, 0];
+  function figCat(t) {
+    var g = fgrid(), c = t % 6400, ph = Math.floor(c / 800), lx = CAT_LOOK[ph], blink = c % 3200 > 3000;
+    fart(g, CAT, 0, 0);
+    if (ph === 6 && c % 800 < 300) { g[1] = 0; fput(g, 0, 1, 1); }
+    fput(g, 3 + lx, 4, blink ? 1 : 2); fput(g, 5 + lx, 4, blink ? 1 : 2);
     return g;
   }
-  /* VECKA: seven bars, one per weekday, bouncing like a level meter with falling peak caps; today's cap is the accent */
-  function weekBar(i, q) { return 1 + Math.round(6 * (0.5 + 0.5 * Math.sin(q / 380 * (1 + i * 0.17) + i * 1.3))); }
-  function figWeek(t) {
-    var g = fgrid(), q = Math.floor(t / 90) * 90, today = (new Date().getDay() + 6) % 7, i, y, h, pk, k;
-    for (i = 0; i < 7; i++) {
-      h = weekBar(i, q); pk = h;
-      for (k = 1; k < 7; k++) pk = Math.max(pk, weekBar(i, q - k * 90) - Math.floor(k / 3));
-      for (y = 0; y < h; y++) fput(g, i + 1, 8 - y, 1);
-      if (pk >= h && pk < 8) fput(g, i + 1, 8 - pk, i === today ? 2 : 1);
-    }
+
+  /* FÅGEL: flaps in four mechanical beats and bobs with them; wind dots stream past; orange eye and beak */
+  var B_WING = [[[4, 3], [3, 2], [2, 1]], [[3, 3], [2, 3]], [[3, 6], [2, 7]], [[3, 3], [2, 3]]];
+  function figBird(t) {
+    var g = fgrid(), f = Math.floor(t / 130) % 4, dy = f === 2 ? 1 : f === 0 ? -1 : 0, w = Math.floor(t / 70), i;
+    for (i = 0; i < 2; i++) { var x = 8 - ((w + i * 6) % 12); fput(g, x, 1 + i * 6, 1); fput(g, x + 1, 1 + i * 6, 1); }
+    fart(g, ["x....xo..", ".xxxxxxo.", "x..xxx..."], 0, 3 + dy);
+    B_WING[f].forEach(function (p) { fput(g, p[0], p[1] + dy, 1); });
     return g;
   }
-  /* ORM: a seven-dot snake tracing a figure eight; the head is the accent */
-  function snakeAt(s) { var u = s * 0.07; return Math.round(FC + 3.5 * Math.sin(3 * u)) + FN * Math.round(FC + 3.5 * Math.sin(2 * u + 0.8)); }
-  function figSnake(t) {
-    var g = fgrid(), s = Math.floor(t / 40), body = [], k, c;
-    for (k = 0; body.length < 7 && k < 120; k++) { c = snakeAt(s - k); if (body.indexOf(c) < 0) body.push(c); }
-    body.forEach(function (c, i) { fput(g, c % FN, Math.floor(c / FN), i ? 1 : 2); });
-    return g;
-  }
-  /* GLOB: a wireframe sphere turning in steps; one city (accent) rides around and hides behind it */
-  function globePt(g, lat, lon, v) {
-    var x = Math.cos(lat) * Math.sin(lon), z = Math.cos(lat) * Math.cos(lon);
-    if (z > -0.05) fput(g, Math.round(FC + 4 * x), Math.round(FC - 4 * Math.sin(lat)), v);
-  }
-  function figGlobe(t) {
-    var g = fgrid(), rot = Math.floor(t / 60) * 0.06, i, j;
-    for (i = 0; i < 4; i++) for (j = -12; j <= 12; j++) globePt(g, j * Math.PI / 24, rot + i * Math.PI / 2, 1);
-    for (j = 0; j < 48; j++) globePt(g, 0, j * Math.PI / 24, 1);
-    globePt(g, Math.PI / 6, rot + 0.5, 2);
-    return g;
-  }
-  var FIGS = [["ROBOT", figRobot], ["KLOCKA", figClock], ["VECKA", figWeek], ["ORM", figSnake], ["GLOB", figGlobe]];
+  var FIGS = [["PERSON", figPerson], ["HUND", figDog], ["ROBOT", figRobot], ["KATT", figCat], ["FÅGEL", figBird]];
   var fig = { from: -1, t0: 0, raf: 0, last: "", col: null };
   function figReduced() { return !!(reduceMq && reduceMq.matches); }
   function figColors() {
