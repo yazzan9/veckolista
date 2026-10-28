@@ -33,10 +33,10 @@
 [hidden] { display: none !important; }
 body {
   background: var(--bg); color: var(--fg); font-family: var(--f-mono);
-  font-size: 14px; line-height: 1.4;
+  font-size: 14px; line-height: 1.4; margin: 0;
   padding-block: 16px 64px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -115,13 +115,13 @@ input:focus-visible { border-radius: 4px; }
 .mcol { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 0 8px; border-radius: 12px; }
 .mcol:hover { background: var(--surface); }
 .mcol .l { font-size: 10px; letter-spacing: .1em; color: var(--mute); margin-bottom: 3px; }
-.mcol.today .l { color: var(--accent); }
+.mcol.today .l, .mcol.on .l { color: var(--accent); }
 .mcol.sel { background: var(--surface); }
 .dot { width: 15px; height: 15px; border-radius: 50%; background: var(--dot-off); transition: background .2s; }
 .dot.done { background: var(--fg); }
-.mcol.today .dot:not(.done):not(.ring) { background: var(--accent); }
+.mcol.today .dot:not(.done):not(.ring), .mcol.on .dot:not(.done):not(.ring) { background: var(--accent); }
 .dot.ring { background: transparent; border: 1.5px solid var(--dot-off); }
-.mcol.today .dot.ring { border-color: var(--accent); border-width: 2px; }
+.mcol.today .dot.ring, .mcol.on .dot.ring { border-color: var(--accent); border-width: 2px; }
 .more { font-size: 10px; color: var(--mute); line-height: 1; }
 .sum { margin-top: 10px; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: .12em; color: var(--mute); }
 .sum b { color: var(--fg); font-weight: 500; }
@@ -138,7 +138,7 @@ input:focus-visible { border-radius: 4px; }
 .meta .now, .meta .miss { color: var(--accent); }
 
 ul.tasks { list-style: none; margin: 0; padding: 0; }
-.task { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px dashed var(--line); }
+.task { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 9px 0; border-top: 1px dashed var(--line); }
 .chk { width: 20px; height: 20px; border: 1.5px solid var(--fg); border-radius: 4px; position: relative; transition: background .15s, border-color .15s; }
 .task.done .chk { background: var(--accent); border-color: var(--accent); }
 .task.done .chk::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--on-accent); border-width: 0 2px 2px 0; transform: rotate(40deg); }
@@ -194,7 +194,7 @@ ul.tasks { list-style: none; margin: 0; padding: 0; }
 .tinp { background: transparent; border: 1px solid var(--line); border-radius: 17px; color: var(--fg); font: inherit; font-size: 11px; letter-spacing: .08em; padding: 8px 12px; color-scheme: light dark; }
 .chip.dis { opacity: .45; }
 /* overlays: calendar, sheets, toast */
-.cal { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.cal { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
 .calin { max-width: 460px; margin: 0 auto; padding-block: 16px 48px; }
 .calyear { font-family: var(--f-dot); font-weight: 800; font-size: 84px; line-height: .9; letter-spacing: .02em; margin-top: 26px; }
 .calmonthrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
@@ -242,8 +242,6 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 #s-over .lblv { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
 
 /* översikt */
-#s-over { padding-inline: 0; }
-@media (max-width: 460px) { #s-over { margin-inline: -4px; } }
 .greet { margin-top: 38px; }
 .g-l { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
 .g-n { margin: 10px 0 0; font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
@@ -287,7 +285,7 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .v-n { font-family: var(--f-dot); font-weight: 800; font-size: 64px; line-height: .86; letter-spacing: .02em; margin-top: 8px; }
 .v-r { margin-top: 10px; font-size: 10px; letter-spacing: .1em; }
 .nasta { height: 130px; }
-.n-t { margin-top: 10px; font-family: var(--f-display); font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; }
+.n-t { margin-top: 10px; font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .n-a { margin-top: 8px; font-size: 11px; letter-spacing: .1em; color: var(--accent); }
 .n-b { margin-top: 6px; font-size: 10px; letter-spacing: .08em; color: var(--mute); }
 
@@ -307,7 +305,7 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .sum .fin { color: var(--fg); }
 .missbar { font-size: 10px; letter-spacing: .06em; white-space: nowrap; color: var(--accent); padding: 2px 0 10px; }
 .task.missed .txt { color: var(--mute); }
-.act.mvm { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
+.act.mvm { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 .act.mvm:hover { background: var(--accent); color: var(--on-accent); filter: brightness(1.06); }
 .chk:disabled { cursor: default; }
 /* lägg till */
