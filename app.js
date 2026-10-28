@@ -261,7 +261,7 @@
     today = new Date(); todayKey = key(today);
     weekStart = mondayOf(today); openKey = todayKey;
     var u = cur();
-    $("prof").textContent = $("over-prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
+    $("over-prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
     render();
   }
   function sorted(ts) {
@@ -270,21 +270,27 @@
       return a.time ? -1 : b.time ? 1 : 0;
     });
   }
+  function weekKind() { var cm = key(mondayOf(new Date())), w = key(weekStart); return w < cm ? -1 : w > cm ? 1 : 0; }
   function render() {
     var u = cur(); if (!u) return;
-    var dates = [], i;
+    var dates = [], i, kind = weekKind(), past = kind < 0, future = kind > 0, nowD = new Date(), nowK = key(nowD), ydK = key(addDays(nowD, -1));
+    var ahead = Math.round((weekStart - mondayOf(nowD)) / (7 * 864e5));
+    $("today").classList.toggle("on", kind !== 0);
     for (i = 0; i < 7; i++) dates.push(addDays(weekStart, i));
     $("wknum").textContent = pad(isoWeek(weekStart));
     var a = dates[0], b = dates[6];
     $("range").textContent = a.getDate() + " " + MON[a.getMonth()] + " – " + b.getDate() + " " + MON[b.getMonth()] + " " + addDays(weekStart, 3).getFullYear();
-    var none = totalTasks() === 0;
-    $("hello").hidden = !none;
-    if (none) $("hello-n").innerHTML = "HEJ " + esc(u.name.split(" ")[0].toUpperCase()) + "<em>!</em>";
+    var none = totalTasks() === 0, head = future || none;
+    $("hello").hidden = !head; $("range").hidden = head;
+    if (future) { $("hello-n").innerHTML = (ahead === 1 ? "NÄSTA VECKA" : "OM " + ahead + " VECKOR") + "<em>!</em>"; $("hello-s").textContent = "PLANERA I FÖRTID"; }
+    else if (none) { $("hello-n").innerHTML = "HEJ " + esc(u.name.split(" ")[0].toUpperCase()) + "<em>!</em>"; $("hello-s").textContent = "DIN FÖRSTA VECKA BÖRJAR HÄR"; }
 
-    var total = 0, done = 0, mh = "", dh = "";
+    var total = 0, done = 0, missed = 0, mh = "", dh = "";
     dates.forEach(function (d, idx) {
-      var k = key(d), ts = list(k), isToday = k === todayKey;
+      var k = key(d), ts = list(k), isToday = k === nowK, dayMiss = kind === 0 && k < nowK, mn = 0;
       total += ts.length;
+      if (dayMiss) ts.forEach(function (t) { if (!t.d) mn++; });
+      missed += mn;
       ts.forEach(function (t) { if (t.d) done++; });
       var dots = "";
       if (!ts.length) dots = '<span class="dot ring"></span>';
@@ -295,20 +301,27 @@
       mh += '<button class="mcol' + (isToday ? " today" : "") + (k === openKey ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
 
       var open = k === openKey, dn = ts.filter(function (t) { return t.d; }).length;
-      var meta = (isToday ? '<span class="now">IDAG</span> · ' : "") + d.getDate() + " " + MON[d.getMonth()] + (ts.length ? " · " + dn + "/" + ts.length : "");
+      var meta = (isToday ? '<span class="now">IDAG</span> · ' : k === ydK && kind === 0 ? "IGÅR · " : "") + d.getDate() + " " + MON[d.getMonth()] + (ts.length ? " · " + dn + "/" + ts.length : "");
       dh += '<div class="day' + (open ? " open" : "") + '"><button class="dayhead" data-head="' + k + '" aria-expanded="' + open + '"><span class="name">' + DAYS[idx] + '</span><span class="meta">' + meta + "</span></button>";
       if (open) {
         var allDone = ts.length > 0 && dn === ts.length;
-        if (allDone) dh += '<div class="allclear"><div class="ac-n">0</div><div class="ac-t"><b>ALLT</b><b class="a">KLART</b></div></div><div class="ac-cap">0 KVAR · ' + dn + " / " + ts.length + " KLARA</div>";
+        if (mn) dh += '<div class="missbar">' + mn + " MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG</div>";
+        if (allDone && !past) dh += '<div class="allclear"><div class="ac-n">0</div><div class="ac-t"><b>ALLT</b><b class="a">KLART</b></div></div><div class="ac-cap">0 KVAR · ' + dn + " / " + ts.length + " KLARA</div>";
         dh += '<ul class="tasks">';
         sorted(ts).forEach(function (t) {
-          dh += '<li class="task' + (t.d ? " done" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
-            '<button class="chk" data-act="tog" aria-label="Bocka av" aria-pressed="' + t.d + '"></button>' +
+          var ms = dayMiss && !t.d;
+          dh += '<li class="task' + (t.d ? " done" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
+            '<button class="chk" data-act="tog" aria-label="Bocka av" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
             '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + esc(t.t) + "</span>" +
-            '<button class="act" data-act="mv" aria-label="Flytta till nästa dag" title="Flytta till nästa dag">→</button>' +
-            '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button></li>';
+            (past ? "" : '<button class="act' + (ms ? " mvm" : "") + '" data-act="mv" aria-label="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '" title="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '">→</button>' +
+            '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>') + "</li>";
         });
         dh += "</ul>";
+        if (past) {
+          if (!ts.length) dh += '<div class="note">INGET PLANERAT</div>';
+          dh += '<div class="rofoot">SKRIVSKYDDAD · VECKAN ÄR AVSLUTAD</div></div>';
+          return;
+        }
         if (!ts.length) {
           dh += '<div class="ghosts"><div class="ghost" style="opacity:.75"><i></i><b style="width:130px"></b></div><div class="ghost" style="opacity:.45"><i></i><b style="width:90px"></b></div><div class="ghost" style="opacity:.25"><i></i><b style="width:150px"></b></div></div>';
           dh += '<div class="note">INGET PLANERAT ÄNNU</div><div class="sugg"><span class="sl">KOM IGÅNG MED ETT FÖRSLAG</span><div class="chips">';
@@ -330,14 +343,15 @@
     });
     $("matrix").innerHTML = mh;
     $("days").innerHTML = dh;
-    $("sum").innerHTML = "<span><b>" + done + " / " + total + "</b> KLARA</span><span>" + (total - done) + " KVAR</span>";
+    var rt = past ? '<span class="fin">AVSLUTAD</span>' : missed ? '<span class="miss">' + missed + " MISSADE</span>" : total ? "<span>" + (total - done) + " KVAR</span>" : "<span>TOM VECKA</span>";
+    $("sum").innerHTML = "<span><b>" + done + " / " + total + "</b> KLARA</span>" + rt;
     if (focusKey) { var inp = $("add-" + focusKey); if (inp) inp.focus(); focusKey = null; }
   }
 
   function setWeek(ws) {
     weekStart = ws;
     var mk = key(ws), end = key(addDays(ws, 6));
-    openKey = (todayKey >= mk && todayKey <= end) ? todayKey : mk;
+    openKey = (todayKey >= mk && todayKey <= end) ? todayKey : mk > todayKey ? null : mk;
     render();
   }
   $("prev").onclick = function () { setWeek(addDays(weekStart, -7)); };
@@ -364,7 +378,11 @@
   var daysEl = $("days");
   daysEl.addEventListener("click", function (e) {
     var h = e.target.closest("[data-head]");
-    if (h) { var k = h.getAttribute("data-head"); openKey = openKey === k ? null : k; render(); return; }
+    if (h) {
+      var k = h.getAttribute("data-head");
+      if (weekKind() > 0) { openKey = k; focusKey = k; } else openKey = openKey === k ? null : k;
+      render(); return;
+    }
     var op = e.target.closest("[data-opt]");
     if (op) { var ok = op.getAttribute("data-opt"), bx = $("opts-" + ok); pendFor(ok); bx.hidden = !bx.hidden; updatePend(ok); return; }
     var pt = e.target.closest("[data-pt]");
@@ -376,14 +394,14 @@
     var gt = e.target.closest("[data-goto]");
     if (gt) { openKey = gt.getAttribute("data-goto"); render(); try { var o2 = document.querySelector(".day.open"); if (o2) o2.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (x2) {} return; }
     if (e.target.closest("[data-nextweek]")) { setWeek(addDays(weekStart, 7)); return; }
-    var btn = e.target.closest("[data-act]"); if (!btn) return;
+    var btn = e.target.closest("[data-act]"); if (!btn || weekKind() < 0) return;
     var li = btn.closest(".task"), k2 = li.getAttribute("data-k"), id = li.getAttribute("data-id");
     var arr = list(k2), idx = arr.findIndex(function (t) { return t.id === id; });
     if (idx < 0) return;
     var act = btn.getAttribute("data-act");
     if (act === "tog") arr[idx].d = !arr[idx].d;
     else if (act === "del") arr.splice(idx, 1);
-    else if (act === "mv") { var t = arr.splice(idx, 1)[0], nk2 = key(addDays(fromKey(k2), 1)); push(nk2, t); }
+    else if (act === "mv") { var t = arr.splice(idx, 1)[0], nk2 = btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)); push(nk2, t); }
     allTasks()[k2] = arr; save(); render();
   });
   daysEl.addEventListener("change", function (e) {
@@ -408,7 +426,6 @@
     $("st-av").textContent = u.name.charAt(0).toUpperCase(); $("st-name").textContent = u.name; $("st-mail").textContent = state.session.toUpperCase();
     clearArmed = false; $("st-clear").textContent = "Rensa alla uppgifter"; $("settings").hidden = false;
   }
-  $("prof").onclick = openSettings;
   $("over-prof").onclick = openSettings;
   $("st-close").onclick = function () { $("settings").hidden = true; };
   $("settings").addEventListener("click", function (e) { if (e.target === $("settings")) $("settings").hidden = true; });
