@@ -883,12 +883,12 @@
     var k = g.join("");
     if (k === fig.last) return;
     fig.last = k;
-    var cv = $("o-fig-c"), S = 56, dpr = window.devicePixelRatio || 1, pitch = S / FN, ctx, i;
+    var cv = $("o-fig-c"), S = 72, dpr = window.devicePixelRatio || 1, pitch = S / FN, rad = pitch * 0.37, ctx, i;
     if (cv.width !== Math.round(S * dpr)) { cv.width = cv.height = Math.round(S * dpr); }
     ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S, S);
     for (i = 0; i < 3; i++) {
       ctx.fillStyle = fig.col[i]; ctx.beginPath();
-      for (y = 0; y < FN; y++) for (x = 0; x < FN; x++) if (g[y * FN + x] === i) { ctx.moveTo(pitch * (x + 0.5) + 2.3, pitch * (y + 0.5)); ctx.arc(pitch * (x + 0.5), pitch * (y + 0.5), 2.3, 0, 2 * Math.PI); }
+      for (y = 0; y < FN; y++) for (x = 0; x < FN; x++) if (g[y * FN + x] === i) { ctx.moveTo(pitch * (x + 0.5) + rad, pitch * (y + 0.5)); ctx.arc(pitch * (x + 0.5), pitch * (y + 0.5), rad, 0, 2 * Math.PI); }
       ctx.fill();
     }
   }
