@@ -26,7 +26,9 @@
 
   var today = new Date(), todayKey = key(today);
   var state = { users: {}, session: null, theme: "system" };
-  var weekStart = mondayOf(today), openKey = todayKey, focusKey = null;
+  var weekStart = mondayOf(today), openKey = todayKey, focusKey = null, justDone = null;
+  var reduceMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  function scrollOpenDay() { var o = document.querySelector(".day.open"); if (o) o.scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" }); }
 
   /* ---------- storage ---------- */
   function load() {
@@ -318,7 +320,7 @@
       var dots = "";
       if (!ts.length) dots = '<span class="dot ring"></span>';
       else {
-        ts.slice(0, MAXDOTS).forEach(function (t) { dots += '<span class="dot' + (t.d ? " done" : "") + '"></span>'; });
+        ts.slice(0, MAXDOTS).forEach(function (t) { dots += '<span class="dot' + (t.d ? " done" : "") + (t.id === justDone ? " pulse" : "") + '"></span>'; });
         if (ts.length > MAXDOTS) dots += '<span class="more">+' + (ts.length - MAXDOTS) + "</span>";
       }
       mh += '<button class="mcol' + (isToday ? " today" : "") + (k === openKey || (future && idx === 0) ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
@@ -334,7 +336,7 @@
         sorted(ts).forEach(function (t) {
           var ms = dayMiss && !t.d;
           dh += '<li class="task' + (t.d ? " done" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
-            '<button class="chk" data-act="tog" aria-label="Bocka av" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
+            '<button class="chk' + (t.id === justDone ? " pulse" : "") + '" data-act="tog" aria-label="Klar: ' + esc(t.t) + '" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
             '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + esc(t.t) + "</span>" +
             (past ? "" : '<button class="act' + (ms ? " mvm" : "") + '" data-act="mv" aria-label="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '" title="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '">→</button>' +
             '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>' +
@@ -370,6 +372,7 @@
     var rt = past ? '<span class="fin">AVSLUTAD</span>' : missed ? '<span class="miss">' + missed + " MISSADE</span>" : total ? "<span>" + (total - done) + " KVAR</span>" : "<span>TOM VECKA</span>";
     $("sum").innerHTML = "<span><b>" + done + " / " + total + "</b> KLARA</span>" + rt;
     if (focusKey) { var inp = $("add-" + focusKey); if (inp) inp.focus(); focusKey = null; }
+    justDone = null;
   }
 
   function setWeek(ws) {
@@ -385,7 +388,7 @@
   $("matrix").addEventListener("click", function (e) {
     var b = e.target.closest("[data-pick]"); if (!b) return;
     openKey = b.getAttribute("data-pick"); render();
-    try { var o = document.querySelector(".day.open"); if (o) o.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (x) {}
+    scrollOpenDay();
   });
 
   var pend = { k: null, time: "", rem: false };
@@ -422,7 +425,7 @@
     var sg = e.target.closest("[data-sug]");
     if (sg) { push(sg.getAttribute("data-k"), { id: uid(), t: sg.getAttribute("data-sug"), d: false }); save(); render(); return; }
     var gt = e.target.closest("[data-goto]");
-    if (gt) { openKey = gt.getAttribute("data-goto"); render(); try { var o2 = document.querySelector(".day.open"); if (o2) o2.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (x2) {} return; }
+    if (gt) { openKey = gt.getAttribute("data-goto"); render(); scrollOpenDay(); return; }
     if (e.target.closest("[data-nextweek]")) { setWeek(addDays(weekStart, 7)); return; }
     var btn = e.target.closest("[data-act]"); if (!btn || weekKind() < 0) return;
     var li = btn.closest(".task"), k2 = li.getAttribute("data-k"), id = li.getAttribute("data-id");
@@ -430,7 +433,12 @@
     if (idx < 0) return;
     var act = btn.getAttribute("data-act");
     if (act === "del") { delTask(k2, id); return; }
-    if (act === "tog") arr[idx].d = !arr[idx].d;
+    if (act === "tog") {
+      arr[idx].d = !arr[idx].d; justDone = arr[idx].d ? id : null;
+      save(); render();
+      var nc = daysEl.querySelector('.task[data-id="' + id + '"] .chk'); if (nc) nc.focus({ preventScroll: true });
+      return;
+    }
     else if (act === "mv") { var t = arr.splice(idx, 1)[0], nk2 = btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)); push(nk2, t); }
     allTasks()[k2] = arr; save(); render();
   });
@@ -536,6 +544,7 @@
     var t = arr[idx], v = $("ed-title").value.trim();
     if (v) t.t = v;
     if (ed.time) t.time = ed.time; else delete t.time;
+    if (ed.done && !t.d) justDone = t.id;
     t.d = ed.done;
     if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
     save(); closeEdit(); render();
