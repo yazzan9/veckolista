@@ -21,6 +21,13 @@
     var w1 = new Date(d.getFullYear(), 0, 4);
     return 1 + Math.round(((d - w1) / 864e5 - 3 + ((w1.getDay() + 6) % 7)) / 7);
   }
+  /* "Ring tandläkaren 14:30" or "Träning kl 7" -> title + time. Only a trailing time counts. */
+  var TIME_RE = /\s*(?:\bkl\.?\s*([01]?\d|2[0-3])(?:[:.]([0-5]\d))?|\b([01]?\d|2[0-3]):([0-5]\d))\s*$/i;
+  function parseTime(s) {
+    var m = TIME_RE.exec(s), t = m ? s.slice(0, m.index).trim() : "";
+    if (!m || !t) return { t: s.trim(), time: "" };
+    return { t: t, time: pad(+(m[1] || m[3])) + ":" + (m[2] || m[4] || "00") };
+  }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -449,9 +456,9 @@
   daysEl.addEventListener("submit", function (e) {
     e.preventDefault();
     var f = e.target, k = f.getAttribute("data-k"), inp = f.querySelector("input");
-    var v = inp.value.trim(); if (!v) { openAdd(k, "plan"); return; }
-    var nt = { id: uid(), t: v, d: false };
-    if (pend.k === k && pend.time) nt.time = pend.time;
+    var p = parseTime(inp.value); if (!p.t) { openAdd(k, "plan"); return; }
+    var nt = { id: uid(), t: p.t, d: false };
+    if (p.time) nt.time = p.time; else if (pend.k === k && pend.time) nt.time = pend.time;
     pend = { k: null, time: "", rem: false };
     push(k, nt); save(); focusKey = k; render();
     if (nt.time) toast("TILLAGD · PÅMINNELSE " + nt.time);
@@ -592,16 +599,20 @@
     $("ad-sub").textContent = d.getDate() + " " + MON[d.getMonth()] + " · VECKA " + isoWeek(d) + " · " + (n ? plural(n) : "INGA UPPGIFTER ÄNNU");
     $("ad-when").textContent = (addKey === nowK ? "IDAG" : d.getDate() + " " + MON[d.getMonth()]) + " · " + DAYS[idx];
     $("ad-today").classList.toggle("on", addKey !== nowK);
-    var other = addTime && addTime !== "09:00" && addTime !== "17:00";
-    Array.prototype.forEach.call($("ad-chips").querySelectorAll("[data-at]"), function (c) {
-      var v = c.getAttribute("data-at"), on = v === "other" ? !!other : v === addTime;
-      c.classList.toggle("sel", on); c.setAttribute("aria-pressed", on);
-    });
+    addChips();
     for (var i = 0; i < 7; i++) {
       var dk = key(addDays(m, i)), dd = addDays(m, i);
       h += '<button type="button" class="adday' + (dk === addKey ? " sel" : "") + '" data-ad="' + dk + '" aria-pressed="' + (dk === addKey) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK ? " disabled" : "") + ">" + LET[i] + "</button>";
     }
     $("ad-days").innerHTML = h;
+  }
+  function addChips() {
+    var at = parseTime($("ad-inp").value).time || addTime, other = at && at !== "09:00" && at !== "17:00";
+    $("ad-chips").querySelector('[data-at="other"]').textContent = other ? at : "ANNAN TID";
+    Array.prototype.forEach.call($("ad-chips").querySelectorAll("[data-at]"), function (c) {
+      var v = c.getAttribute("data-at"), on = v === "other" ? !!other : v === at;
+      c.classList.toggle("sel", on); c.setAttribute("aria-pressed", on);
+    });
   }
   $("ad-back").onclick = closeAdd;
   $("ad-today").onclick = function () { addKey = key(new Date()); renderAdd(); $("ad-inp").focus(); };
@@ -617,11 +628,12 @@
     renderAdd();
   });
   $("ad-time").addEventListener("change", function () { addTime = $("ad-time").value; renderAdd(); });
+  $("ad-inp").addEventListener("input", addChips);
   $("f-add").addEventListener("submit", function (e) {
     e.preventDefault();
-    var inp = $("ad-inp"), v = inp.value.trim(); if (!v) { inp.focus(); return; }
-    var nt = { id: uid(), t: v, d: false };
-    if (addTime) nt.time = addTime;
+    var inp = $("ad-inp"), p = parseTime(inp.value); if (!p.t) { inp.focus(); return; }
+    var nt = { id: uid(), t: p.t, d: false };
+    if (p.time || addTime) nt.time = p.time || addTime;
     push(addKey, nt); save(); inp.value = ""; renderAdd(); inp.focus();
     var lbl = $("ad-lbl"), sel = $("ad-days").querySelector(".sel");
     lbl.textContent = "TILLAGD" + (nt.time ? " · " + nt.time : ""); lbl.classList.add("ok");
