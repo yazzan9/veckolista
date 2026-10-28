@@ -152,7 +152,7 @@
       <button type="button" class="chip" data-at="17:00">17:00</button>
       <button type="button" class="chip" data-at="other">ANNAN TID</button>
     </div>
-    <input class="tinp" type="time" id="ad-time" aria-label="Annan tid" hidden>
+    <div class="tpick" id="ad-pick" hidden></div>
     <button class="btn pri ad-go" type="submit">LÄGG TILL <span aria-hidden="true">+</span></button>
   </form>
   <div class="ad-days" id="ad-days" role="group" aria-label="Välj dag"></div>
@@ -211,7 +211,8 @@
         <div><span class="st-k">PÅMINNELSER</span><span class="st-s">NÄR EN UPPGIFT HAR TID</span></div>
         <button class="tog" id="st-rem" role="switch" aria-checked="true" aria-label="Påminnelser"><i></i></button>
       </div>
-      <div class="st-row"><span class="st-k">STANDARDTID</span><input class="tinp st-def" type="time" id="st-def" aria-label="Standardtid"></div>
+      <div class="st-row"><span class="st-k">STANDARDTID</span><button type="button" class="chip st-def" id="st-def" aria-label="Standardtid">09:00</button></div>
+      <div class="tpick" id="st-pick" hidden></div>
     </div>
     <button class="btn out" id="st-out">LOGGA UT</button>
     <div class="st-ver">VECKOLISTA · VERSION 1.0</div>
@@ -237,7 +238,7 @@
         <button type="button" class="chip" data-et="18:00">18:00</button>
         <button type="button" class="chip" data-et="other">ANNAN</button>
       </div>
-      <input class="tinp" type="time" id="ed-time" aria-label="Annan tid" hidden>
+      <div class="tpick" id="ed-pick" hidden></div>
     </div>
     <div class="clock">
       <div class="ck-l"><div class="ck" id="ed-clock" aria-live="polite">--:--</div><div class="ck-cap" id="ed-cap"></div></div>

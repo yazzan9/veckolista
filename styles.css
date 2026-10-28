@@ -446,4 +446,17 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .avatar.sm::before { content: ""; position: absolute; inset: -2px; }
 .add input { min-height: 40px; }
 
+/* tidväljare */
+.tpick { margin-top: 12px; background: var(--bg); border-radius: 22px; padding: 14px; }
+.tp { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.tp-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.tp-n, .tp-c { font-family: var(--f-dot); font-weight: 800; font-size: 56px; line-height: .9; letter-spacing: .02em; }
+.tp-n { min-width: 2.2ch; text-align: center; }
+.tp-c { color: var(--accent); padding-bottom: 4px; }
+.tp-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.tp-acts .btn { min-height: 46px; }
+.st-def { padding: 0 14px; }
+.stsheet .tpick { margin: 0 0 16px; }
+.sheet:has(#ed-pick:not([hidden])) .clock { display: none; }
+
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }

@@ -28,6 +28,33 @@
     if (!m || !t) return { t: s.trim(), time: "" };
     return { t: t, time: pad(+(m[1] || m[3])) + ":" + (m[2] || m[4] || "00") };
   }
+  /* time picker: hour and minute steppers, nothing is set until KLAR */
+  function tpCol(u, what) {
+    return '<div class="tp-col"><button type="button" class="rnd" data-tp="' + u + '+" aria-label="' + what + ' senare">+</button>' +
+      '<b class="tp-n" data-tpv="' + u + '"></b><button type="button" class="rnd" data-tp="' + u + '-" aria-label="' + what + ' tidigare">−</button></div>';
+  }
+  function openPicker(host, value, done) {
+    var p = (value || settings.defTime).split(":"), h = +p[0], m = +p[1];
+    host.innerHTML = '<div class="tp" role="group" aria-label="Välj tid">' + tpCol("h", "En timme") + '<b class="tp-c" aria-hidden="true">:</b>' + tpCol("m", "Fem minuter") + "</div>" +
+      '<div class="tp-acts"><button type="button" class="btn out" data-tp="no">AVBRYT</button><button type="button" class="btn pri" data-tp="ok">KLAR</button></div>';
+    function draw() { host.querySelector('[data-tpv="h"]').textContent = pad(h); host.querySelector('[data-tpv="m"]').textContent = pad(m); }
+    function finish(ok) { closePicker(host); done(ok ? pad(h) + ":" + pad(m) : null); }
+    host.onclick = function (e) {
+      e.stopPropagation();
+      var b = e.target.closest("[data-tp]"); if (!b) return;
+      var a = b.getAttribute("data-tp");
+      if (a === "ok" || a === "no") { finish(a === "ok"); return; }
+      if (a === "h+") h = (h + 1) % 24; else if (a === "h-") h = (h + 23) % 24;
+      else if (a === "m+") m = (Math.floor(m / 5) * 5 + 5) % 60; else if (a === "m-") m = (Math.ceil(m / 5) * 5 + 55) % 60;
+      draw();
+    };
+    host.confirm = function () { finish(true); };
+    host.hidden = false; draw();
+    host.querySelector('[data-tp="ok"]').focus({ preventScroll: true });
+    host.scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" });
+  }
+  function closePicker(host) { if (!host || host.hidden) return; host.hidden = true; host.innerHTML = ""; host.onclick = null; host.confirm = null; }
+  function pickerOpen(host) { return host && !host.hidden && host.confirm; }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -365,7 +392,7 @@
         }
         dh += '<form class="add' + (none ? " first" : "") + '" data-k="' + k + '"' + (none ? "" : ' style="margin-top:' + (ts.length ? "2px" : "14px") + '"') + '><input id="add-' + k + '" type="text" autocomplete="off" placeholder="' + (none ? "Första uppgiften..." : "Lägg till en uppgift...") + '" maxlength="140"><button class="opt" type="button" data-opt="' + k + '" aria-label="Tid, påminnelse och upprepning" title="Tid, påminnelse och upprepning">' + CLOCK + '</button><button class="go" type="submit" aria-label="Lägg till">+</button></form>';
         if (none) dh += '<div class="addhint">↑ BÖRJA HÄR. KLOCKAN = PÅMINNELSE</div>';
-        dh += '<div class="opts" id="opts-' + k + '" hidden><span class="sl" style="margin:0">TID = PÅMINNELSE</span><div class="chips">' + ["INGEN", "09:00", "12:00", "17:00"].map(function (x) { return '<button type="button" class="chip" data-pt="' + x + '" data-k="' + k + '">' + x + '</button>'; }).join("") + '</div><div class="optrow"><input class="tinp" type="time" id="tm-' + k + '" data-k="' + k + '" aria-label="Egen tid"></div></div>';
+        dh += '<div class="opts" id="opts-' + k + '" hidden><span class="sl" style="margin:0">TID = PÅMINNELSE</span><div class="chips">' + ["INGEN", "09:00", "12:00", "17:00"].map(function (x) { return '<button type="button" class="chip" data-pt="' + x + '" data-k="' + k + '">' + x + '</button>'; }).join("") + '<button type="button" class="chip" data-pt="other" data-k="' + k + '">ANNAN</button></div><div class="tpick" id="pk-' + k + '" hidden></div></div>';
         if (dn) dh += '<button class="clear" data-clear="' + k + '">RENSA KLARA</button>';
         if (allDone) {
           if (idx < 6) {
@@ -404,11 +431,12 @@
   function pendFor(k) { if (pend.k !== k) pend = { k: k, time: "", rem: false }; }
   function updatePend(k) {
     var box = $("opts-" + k); if (!box) return;
+    var other = pend.time && ["09:00", "12:00", "17:00"].indexOf(pend.time) < 0;
     Array.prototype.forEach.call(box.querySelectorAll("[data-pt]"), function (c) {
       var v = c.getAttribute("data-pt");
-      c.classList.toggle("sel", v === (pend.time || "INGEN"));
+      if (v === "other") c.textContent = other ? pend.time : "ANNAN";
+      c.classList.toggle("sel", v === "other" ? !!other : v === (pend.time || "INGEN"));
     });
-    var ti = $("tm-" + k); if (ti && ti.value !== pend.time) ti.value = pend.time;
     var ob = document.querySelector('[data-opt="' + k + '"]'); if (ob) ob.classList.toggle("on", !!pend.time);
   }
   var daysEl = $("days");
@@ -428,7 +456,11 @@
     var op = e.target.closest("[data-opt]");
     if (op) { var ok = op.getAttribute("data-opt"), bx = $("opts-" + ok); pendFor(ok); bx.hidden = !bx.hidden; updatePend(ok); return; }
     var pt = e.target.closest("[data-pt]");
-    if (pt) { var pk = pt.getAttribute("data-k"), pv = pt.getAttribute("data-pt"); pendFor(pk); pend.time = pv === "INGEN" ? "" : pv; if (!pend.time) pend.rem = false; updatePend(pk); return; }
+    if (pt) {
+      var pk = pt.getAttribute("data-k"), pv = pt.getAttribute("data-pt"); pendFor(pk);
+      if (pv === "other") { openPicker($("pk-" + pk), pend.time, function (v) { if (v) { pendFor(pk); pend.time = v; } updatePend(pk); }); return; }
+      closePicker($("pk-" + pk)); pend.time = pv === "INGEN" ? "" : pv; if (!pend.time) pend.rem = false; updatePend(pk); return;
+    }
     var c = e.target.closest("[data-clear]");
     if (c) { clearDone(c.getAttribute("data-clear")); return; }
     var sg = e.target.closest("[data-sug]");
@@ -453,13 +485,10 @@
     }
     if (act === "mv") moveTask(k2, id, btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)));
   });
-  daysEl.addEventListener("change", function (e) {
-    var ti = e.target.closest(".tinp"); if (!ti) return;
-    var k = ti.getAttribute("data-k"); pendFor(k); pend.time = ti.value; if (!pend.time) pend.rem = false; updatePend(k);
-  });
   daysEl.addEventListener("submit", function (e) {
     e.preventDefault();
     var f = e.target, k = f.getAttribute("data-k"), inp = f.querySelector("input");
+    if (pickerOpen($("pk-" + k))) $("pk-" + k).confirm();
     var p = parseTime(inp.value); if (!p.t) { openAdd(k, "plan"); return; }
     var nt = { id: uid(), t: p.t, d: false };
     if (p.time) nt.time = p.time; else if (pend.k === k && pend.time) nt.time = pend.time;
@@ -523,7 +552,7 @@
   function openEdit(k, id) {
     var t = list(k).filter(function (x) { return x.id === id; })[0]; if (!t) return;
     ed = { k: k, id: id, day: k, time: t.time || "", done: !!t.d };
-    $("ed-title").value = t.t; $("ed-done").checked = ed.done; $("ed-time").hidden = true;
+    $("ed-title").value = t.t; $("ed-done").checked = ed.done; closePicker($("ed-pick"));
     renderEdit(); $("edit").hidden = false; $("ed-title").focus();
   }
   function closeEdit() { $("edit").hidden = true; ed = null; }
@@ -536,6 +565,7 @@
     }
     $("ed-days").innerHTML = h;
     var other = ed.time && ED_CHIPS.indexOf(ed.time) < 0;
+    $("ed-chips").querySelector('[data-et="other"]').textContent = other ? ed.time : "ANNAN";
     Array.prototype.forEach.call($("ed-chips").querySelectorAll("[data-et]"), function (c) {
       var v = c.getAttribute("data-et"), on = v === "other" ? !!other : v === ed.time;
       c.classList.toggle("sel", on); c.setAttribute("aria-pressed", on);
@@ -558,14 +588,14 @@
   });
   $("ed-chips").addEventListener("click", function (e) {
     var c = e.target.closest("[data-et]"); if (!c) return;
-    var v = c.getAttribute("data-et"), ti = $("ed-time");
-    if (v === "other") { ti.hidden = false; ti.value = ed.time || settings.defTime; ed.time = ti.value; }
-    else { ti.hidden = true; ed.time = v; }
+    var v = c.getAttribute("data-et");
+    if (v === "other") { openPicker($("ed-pick"), ed.time, function (t) { if (t && ed) ed.time = t; if (ed) renderEdit(); }); return; }
+    closePicker($("ed-pick")); ed.time = v;
     renderEdit();
   });
-  $("ed-time").addEventListener("change", function () { ed.time = $("ed-time").value; renderEdit(); });
   $("ed-done").addEventListener("change", function () { ed.done = $("ed-done").checked; });
   $("ed-save").onclick = function () {
+    if (pickerOpen($("ed-pick"))) $("ed-pick").confirm();
     var arr = list(ed.k), idx = arr.findIndex(function (t) { return t.id === ed.id; }); if (idx < 0) { closeEdit(); return; }
     var t = arr[idx], v = $("ed-title").value.trim();
     if (v) t.t = v;
@@ -605,7 +635,7 @@
     var s = $("s-add"); s.hidden = false; document.body.classList.add("adding");
     setTabsVisible(true); window.scrollTo(0, 0);
     s.classList.remove("slidein"); void s.offsetWidth; s.classList.add("slidein");
-    $("ad-inp").value = ""; $("ad-time").hidden = true;
+    $("ad-inp").value = ""; closePicker($("ad-pick"));
     renderAdd(); $("ad-inp").focus();
   }
   function closeAdd() {
@@ -641,15 +671,19 @@
   });
   $("ad-chips").addEventListener("click", function (e) {
     var c = e.target.closest("[data-at]"); if (!c) return;
-    var v = c.getAttribute("data-at"), ti = $("ad-time");
-    if (v === "other") { ti.hidden = false; if (!ti.value) ti.value = settings.defTime; addTime = ti.value; }
-    else { ti.hidden = true; addTime = v; }
-    renderAdd();
+    var v = c.getAttribute("data-at");
+    if (v === "other") {
+      $("ad-inp").blur();
+      openPicker($("ad-pick"), parseTime($("ad-inp").value).time || addTime, function (t) { if (t) addTime = t; addChips(); });
+      return;
+    }
+    closePicker($("ad-pick")); addTime = v;
+    addChips();
   });
-  $("ad-time").addEventListener("change", function () { addTime = $("ad-time").value; renderAdd(); });
   $("ad-inp").addEventListener("input", addChips);
   $("f-add").addEventListener("submit", function (e) {
     e.preventDefault();
+    if (pickerOpen($("ad-pick"))) $("ad-pick").confirm();
     var inp = $("ad-inp"), p = parseTime(inp.value); if (!p.t) { inp.focus(); return; }
     var nt = { id: uid(), t: p.t, d: false };
     if (p.time || addTime) nt.time = p.time || addTime;
@@ -675,7 +709,7 @@
     });
     $("st-acc-n").textContent = ACC[settings.accent];
     $("st-rem").setAttribute("aria-checked", settings.remind);
-    $("st-def").value = settings.defTime;
+    $("st-def").textContent = settings.defTime;
   }
   function openSettings() {
     var u = cur(); if (!u) return;
@@ -694,7 +728,9 @@
     b.onclick = function () { settings.accent = b.getAttribute("data-acc"); applyTheme(); saveSettings(); };
   });
   $("st-rem").onclick = function () { settings.remind = !settings.remind; applyTheme(); saveSettings(); renderSettings(); };
-  $("st-def").addEventListener("change", function () { if ($("st-def").value) { settings.defTime = $("st-def").value; saveSettings(); } });
+  $("st-def").onclick = function () {
+    openPicker($("st-pick"), settings.defTime, function (t) { if (t) { settings.defTime = t; saveSettings(); } renderSettings(); $("st-def").focus(); });
+  };
   $("st-out").onclick = function () { state.session = null; save(); $("settings").hidden = true; show("welcome"); toast("DU ÄR UTLOGGAD"); };
 
   /* ---------- calendar ---------- */
