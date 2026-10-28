@@ -316,6 +316,8 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .ad-card { background: var(--surface); border-radius: 22px; padding: 16px 18px 18px; margin-top: 18px; }
 .ad-card .t-row { min-height: 0; }
 .ad-when { color: var(--accent); }
+#ad-lbl.ok { color: var(--fg); }
+#ad-lbl.ok::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: 1px; }
 .ad-inp { display: block; width: 100%; min-width: 0; background: transparent; border: 0; color: var(--fg); font-family: var(--f-display); font-weight: 800; font-size: 40px; line-height: 1.15; text-transform: uppercase; letter-spacing: .005em; caret-color: var(--accent); padding: 0; margin: 18px 0 16px; }
 .ad-inp::placeholder { color: var(--mute); opacity: .6; }
 .ad-inp:focus-visible { outline: none; }

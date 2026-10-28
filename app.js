@@ -571,9 +571,10 @@
   swipeDown(document.querySelector("#edit .panel"), closeEdit);
 
   /* ---------- lägg till ---------- */
-  var addKey = null, addFrom = "plan", addTime = "";
+  var addKey = null, addFrom = "plan", addTime = "", addOkT = null;
   function openAdd(k, from) {
-    addKey = k; addFrom = from; addTime = "";
+    var nowK = key(new Date());
+    addKey = k < nowK ? nowK : k; addFrom = from; addTime = "";
     $("s-over").hidden = true; $("s-home").hidden = true;
     var s = $("s-add"); s.hidden = false; document.body.classList.add("adding");
     setTabsVisible(true); window.scrollTo(0, 0);
@@ -622,7 +623,10 @@
     var nt = { id: uid(), t: v, d: false };
     if (addTime) nt.time = addTime;
     push(addKey, nt); save(); inp.value = ""; renderAdd(); inp.focus();
-    toast(nt.time ? "TILLAGD · PÅMINNELSE " + nt.time : "TILLAGD");
+    var lbl = $("ad-lbl"), sel = $("ad-days").querySelector(".sel");
+    lbl.textContent = "TILLAGD" + (nt.time ? " · " + nt.time : ""); lbl.classList.add("ok");
+    if (sel) sel.classList.add("pulse");
+    clearTimeout(addOkT); addOkT = setTimeout(function () { lbl.textContent = "NY UPPGIFT"; lbl.classList.remove("ok"); }, 1600);
   });
   if (window.visualViewport) {
     var vv = window.visualViewport;
