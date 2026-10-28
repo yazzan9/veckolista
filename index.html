@@ -62,14 +62,16 @@
 <!-- Översikt -->
 <main class="app screen" id="s-over" hidden>
   <div class="bar">
-    <span class="lblv">VECKOLISTA</span>
+    <span class="g-l" id="o-greet">GOD DAG</span>
     <span class="sp"></span>
     <button class="pill themebtn" aria-label="Byt tema">AUTO</button>
     <button class="avatar sm" id="over-prof" aria-label="Inställningar">A</button>
   </div>
   <div class="greet">
-    <div class="g-l" id="o-greet">GOD DAG</div>
-    <h1 class="g-n"><span id="o-name">DU</span><i aria-hidden="true">.</i></h1>
+    <div class="g-row">
+      <button class="fig" id="o-fig" aria-label="Figur. Tryck för nästa"><canvas id="o-fig-c" width="56" height="56" aria-hidden="true"></canvas></button>
+      <h1 class="g-n"><span id="o-name">DU</span><i aria-hidden="true">.</i></h1>
+    </div>
     <div class="g-d" id="o-date"></div>
   </div>
 

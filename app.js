@@ -101,11 +101,12 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", red: "RÖD", blue: "BLÅ", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00" };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0 };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
       if (s) { for (var k in settings) if (k in s) settings[k] = s[k]; }
+      if (!(settings.figure >= 0 && settings.figure < 5)) settings.figure = 0;
       else if (state.theme) settings.theme = state.theme;
     } catch (e) {}
   }
@@ -120,6 +121,7 @@
     var label = isDark() ? "MÖRK" : "LJUS";
     Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) { b.textContent = label; b.setAttribute("aria-label", "Tema: " + label.toLowerCase() + ". Tryck för att byta"); });
     if (!$("settings").hidden) renderSettings();
+    figColors(); if (fig && !$("s-over").hidden) figStart();
   }
   if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", applyTheme);
   Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) {
@@ -178,12 +180,20 @@
     ts.slice(0, MAXDOTS).forEach(function (t) { h += '<i class="' + cls(t) + '"></i>'; });
     return h;
   }
+  /* the name stays on one line beside the figure; long names step down in size */
+  function fitName() {
+    var n = document.querySelector(".g-n"), fs = 64;
+    n.style.fontSize = "";
+    while (n.scrollWidth > n.clientWidth + 1 && fs > 36) { fs -= 4; n.style.fontSize = fs + "px"; }
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (!$("s-over").hidden) fitName(); });
   function renderOver() {
     var u = cur(); if (!u) return;
     var now = new Date(), nk = key(now), idx = (now.getDay() + 6) % 7, hr = now.getHours();
     var ms = mondayOf(now), i;
     $("o-greet").textContent = hr < 5 ? "GOD NATT" : hr < 10 ? "GOD MORGON" : hr < 18 ? "GOD DAG" : "GOD KVÄLL";
     $("o-name").textContent = u.name.split(" ")[0].toUpperCase();
+    fitName(); figStart();
     var dl = DAYS[idx] + " · " + now.getDate() + " " + MON[now.getMonth()];
     $("o-date").textContent = dl + " · VECKA " + isoWeek(now);
     $("o-quote").textContent = QUOTES[dayOfYear(now) % QUOTES.length];
@@ -778,6 +788,119 @@
     if (e.key !== "Escape") return;
     if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
+
+  /* ---------- figur: a 9x9 dot-matrix companion next to the name ----------
+     each figure maps time (ms) to 81 dots: 0 off (dotOff), 1 on (fg), 2 accent (max one) */
+  var FN = 9, FC = 4;
+  function fgrid() { return new Uint8Array(FN * FN); }
+  function fput(g, x, y, v) { if (x >= 0 && y >= 0 && x < FN && y < FN && g[y * FN + x] < v) g[y * FN + x] = v; }
+  function fline(g, x0, y0, x1, y1) {
+    var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
+    for (;;) { fput(g, x0, y0, 1); if (x0 === x1 && y0 === y1) return; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+  }
+  function fring(a, r) { return [Math.round(FC + r * Math.sin(a)), Math.round(FC - r * Math.cos(a))]; }
+
+  /* ROBOT: eyes glance around in steps, blink, smile; the antenna leans with the gaze */
+  var GAZE = [[0, 0], [-1, 0], [-1, 0], [0, 0], [1, 0], [1, -1], [0, 0], [0, 0]];
+  function figRobot(t) {
+    var g = fgrid(), c = t % 6400, ph = Math.floor(c / 800), p = GAZE[ph], blink = c % 3200 > 3060, x;
+    [2, 5].forEach(function (ex) {
+      fput(g, ex + p[0], 4 + p[1], 1); fput(g, ex + 1 + p[0], 4 + p[1], 1);
+      if (!blink) { fput(g, ex + p[0], 3 + p[1], 1); fput(g, ex + 1 + p[0], 3 + p[1], 1); }
+    });
+    if (ph === 6) { fput(g, 2, 6, 1); fput(g, 6, 6, 1); for (x = 3; x <= 5; x++) fput(g, x, 7, 1); }
+    else if (ph === 4 && Math.floor(t / 150) % 2) { for (x = 3; x <= 5; x++) { fput(g, x, 6, 1); fput(g, x, 8, 1); } }
+    else for (x = 3; x <= 5; x++) fput(g, x, 7, 1);
+    fput(g, 4, 1, 1); fput(g, 4 + p[0], 0, 2);
+    return g;
+  }
+  /* KLOCKA: the real time; four marks, two hands, the second ticks round the rim as the accent */
+  function figClock() {
+    var g = fgrid(), d = new Date(), i, s;
+    for (i = 0; i < 4; i++) { s = fring(i * Math.PI / 2, 4); fput(g, s[0], s[1], 1); }
+    s = fring(((d.getHours() % 12) + d.getMinutes() / 60) * Math.PI / 6, 2); fline(g, FC, FC, s[0], s[1]);
+    s = fring(d.getMinutes() * Math.PI / 30, 3); fline(g, FC, FC, s[0], s[1]);
+    s = fring(d.getSeconds() * Math.PI / 30, 4); fput(g, s[0], s[1], 2);
+    return g;
+  }
+  /* VECKA: seven bars, one per weekday, bouncing like a level meter with falling peak caps; today's cap is the accent */
+  function weekBar(i, q) { return 1 + Math.round(6 * (0.5 + 0.5 * Math.sin(q / 380 * (1 + i * 0.17) + i * 1.3))); }
+  function figWeek(t) {
+    var g = fgrid(), q = Math.floor(t / 90) * 90, today = (new Date().getDay() + 6) % 7, i, y, h, pk, k;
+    for (i = 0; i < 7; i++) {
+      h = weekBar(i, q); pk = h;
+      for (k = 1; k < 7; k++) pk = Math.max(pk, weekBar(i, q - k * 90) - Math.floor(k / 3));
+      for (y = 0; y < h; y++) fput(g, i + 1, 8 - y, 1);
+      if (pk >= h && pk < 8) fput(g, i + 1, 8 - pk, i === today ? 2 : 1);
+    }
+    return g;
+  }
+  /* ORM: a seven-dot snake tracing a figure eight; the head is the accent */
+  function snakeAt(s) { var u = s * 0.07; return Math.round(FC + 3.5 * Math.sin(3 * u)) + FN * Math.round(FC + 3.5 * Math.sin(2 * u + 0.8)); }
+  function figSnake(t) {
+    var g = fgrid(), s = Math.floor(t / 40), body = [], k, c;
+    for (k = 0; body.length < 7 && k < 120; k++) { c = snakeAt(s - k); if (body.indexOf(c) < 0) body.push(c); }
+    body.forEach(function (c, i) { fput(g, c % FN, Math.floor(c / FN), i ? 1 : 2); });
+    return g;
+  }
+  /* GLOB: a wireframe sphere turning in steps; one city (accent) rides around and hides behind it */
+  function globePt(g, lat, lon, v) {
+    var x = Math.cos(lat) * Math.sin(lon), z = Math.cos(lat) * Math.cos(lon);
+    if (z > -0.05) fput(g, Math.round(FC + 4 * x), Math.round(FC - 4 * Math.sin(lat)), v);
+  }
+  function figGlobe(t) {
+    var g = fgrid(), rot = Math.floor(t / 60) * 0.06, i, j;
+    for (i = 0; i < 4; i++) for (j = -12; j <= 12; j++) globePt(g, j * Math.PI / 24, rot + i * Math.PI / 2, 1);
+    for (j = 0; j < 48; j++) globePt(g, 0, j * Math.PI / 24, 1);
+    globePt(g, Math.PI / 6, rot + 0.5, 2);
+    return g;
+  }
+  var FIGS = [["ROBOT", figRobot], ["KLOCKA", figClock], ["VECKA", figWeek], ["ORM", figSnake], ["GLOB", figGlobe]];
+  var fig = { from: -1, t0: 0, raf: 0, last: "", col: null };
+  function figReduced() { return !!(reduceMq && reduceMq.matches); }
+  function figColors() {
+    if (!fig) return;
+    var s = getComputedStyle(document.documentElement);
+    fig.col = [s.getPropertyValue("--dot-off").trim(), s.getPropertyValue("--fg").trim(), s.getPropertyValue("--accent").trim()];
+    fig.last = "";
+  }
+  function figFrame(now) {
+    var t = figReduced() ? 1600 : now, g = FIGS[settings.figure][1](t), p, o, x, y, d;
+    if (fig.from >= 0) {
+      p = (now - fig.t0) / 320;
+      if (p >= 1 || figReduced()) fig.from = -1;
+      else {
+        o = FIGS[fig.from][1](t);
+        for (y = 0; y < FN; y++) for (x = 0; x < FN; x++) { d = (x + y) / 16 * 0.85; if (p < d) g[y * FN + x] = o[y * FN + x]; else if (p < d + 0.15) g[y * FN + x] = 1; }
+      }
+    }
+    var k = g.join("");
+    if (k === fig.last) return;
+    fig.last = k;
+    var cv = $("o-fig-c"), S = 56, dpr = window.devicePixelRatio || 1, pitch = S / FN, ctx, i;
+    if (cv.width !== Math.round(S * dpr)) { cv.width = cv.height = Math.round(S * dpr); }
+    ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S, S);
+    for (i = 0; i < 3; i++) {
+      ctx.fillStyle = fig.col[i]; ctx.beginPath();
+      for (y = 0; y < FN; y++) for (x = 0; x < FN; x++) if (g[y * FN + x] === i) { ctx.moveTo(pitch * (x + 0.5) + 2.3, pitch * (y + 0.5)); ctx.arc(pitch * (x + 0.5), pitch * (y + 0.5), 2.3, 0, 2 * Math.PI); }
+      ctx.fill();
+    }
+  }
+  function figLoop(now) {
+    fig.raf = 0;
+    if ($("s-over").hidden || document.hidden) return;
+    figFrame(now);
+    if (!figReduced() || fig.from >= 0) fig.raf = requestAnimationFrame(figLoop);
+  }
+  function figStart() {
+    if (!fig.col) figColors();
+    $("o-fig").setAttribute("aria-label", "Figur: " + FIGS[settings.figure][0].toLowerCase() + ". Tryck för nästa figur");
+    if (!fig.raf) fig.raf = requestAnimationFrame(figLoop);
+  }
+  $("o-fig").onclick = function () {
+    fig.from = settings.figure; fig.t0 = performance.now();
+    settings.figure = (settings.figure + 1) % FIGS.length; saveSettings(); buzz(6); figStart();
+  };
 
   /* ---------- keep "today" true when the app stays open past midnight ---------- */
   function tick() {
