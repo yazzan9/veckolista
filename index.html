@@ -178,13 +178,43 @@
   </div>
 </div>
 
-<!-- Konto -->
-<div id="settings" class="ov" hidden>
-  <div class="panel" role="dialog" aria-label="Konto">
-    <div class="bar"><div class="ptitle">Konto</div><span class="sp"></span><button class="pill" id="st-close" aria-label="Stäng">×</button></div>
-    <div class="acct"><div class="avatar" id="st-av">A</div><div><div class="nm" id="st-name"></div><div class="sub" id="st-mail"></div></div></div>
-    <button class="btn out" id="st-clear">Rensa alla uppgifter</button>
-    <button class="btn pri" id="st-out">Logga ut</button>
+<!-- Inställningar -->
+<div id="settings" class="ov full" hidden>
+  <div class="panel sheet stsheet" role="dialog" aria-modal="true" aria-labelledby="st-lbl">
+    <div class="bar">
+      <button class="pill rnd" id="st-close" aria-label="Stäng">×</button>
+      <span class="sp"></span><span class="t-l" id="st-lbl">INSTÄLLNINGAR</span><span class="sp"></span>
+      <button class="pill" id="st-done">KLAR</button>
+    </div>
+    <div class="acct">
+      <div class="avatar big" id="st-av" aria-hidden="true">A</div>
+      <div class="acct-t"><span class="t-l">KONTO</span><div class="nm"><span id="st-name"></span><i aria-hidden="true">.</i></div></div>
+    </div>
+    <div class="st-h">UTSEENDE</div>
+    <div class="st-card">
+      <div class="st-row">
+        <span class="st-k">TEMA</span>
+        <div class="seg" role="radiogroup" aria-label="Tema">
+          <button role="radio" data-set-theme="light">LJUS</button><button role="radio" data-set-theme="dark">MÖRK</button><button role="radio" data-set-theme="system">AUTO</button>
+        </div>
+      </div>
+      <div class="st-row">
+        <div><span class="st-k">FÄRG</span><span class="st-s" id="st-acc-n">ORANGE</span></div>
+        <div class="sw" role="radiogroup" aria-label="Färg">
+          <button role="radio" data-acc="orange" aria-label="Orange"><i></i></button><button role="radio" data-acc="red" aria-label="Röd"><i></i></button><button role="radio" data-acc="blue" aria-label="Blå"><i></i></button><button role="radio" data-acc="mono" aria-label="Mono"><i></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="st-h">PÅMINNELSER</div>
+    <div class="st-card">
+      <div class="st-row">
+        <div><span class="st-k">PÅMINNELSER</span><span class="st-s">NÄR EN UPPGIFT HAR TID</span></div>
+        <button class="tog" id="st-rem" role="switch" aria-checked="true" aria-label="Påminnelser"><i></i></button>
+      </div>
+      <div class="st-row"><span class="st-k">STANDARDTID</span><input class="tinp st-def" type="time" id="st-def" aria-label="Standardtid"></div>
+    </div>
+    <button class="btn out" id="st-out">LOGGA UT</button>
+    <div class="st-ver">VECKOLISTA · VERSION 1.0</div>
   </div>
 </div>
 

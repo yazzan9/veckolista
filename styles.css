@@ -22,6 +22,13 @@
   --bg: #2a2a29; --surface: #363635; --fg: #eeede9; --mute: #8f8d88;
   --line: #4a4a48; --dot-off: #4b4b49; --accent: #ff5a2c; color-scheme: dark;
 }
+/* accent choices from Inställningar; orange is the default above */
+:root { --acc-orange: #ff4a1c; --acc-red: #d71921; --acc-blue: #2f4bff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --acc-orange: #ff5a2c; } }
+:root[data-theme="dark"] { --acc-orange: #ff5a2c; }
+:root[data-accent="red"] { --accent: var(--acc-red); }
+:root[data-accent="blue"] { --accent: var(--acc-blue); }
+:root[data-accent="mono"] { --accent: var(--fg); --on-accent: var(--bg); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body {
@@ -372,5 +379,40 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .undo i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
 .undo span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .undo button { height: 40px; padding: 0 18px; border-radius: 20px; background: var(--accent); color: var(--on-accent); font-size: 11px; letter-spacing: .12em; flex: none; }
+
+/* inställningar */
+.ov.full { background: var(--bg); align-items: stretch; }
+.stsheet { background: var(--bg); border-radius: 0; min-height: 100%; gap: 0; padding-top: calc(20px + env(safe-area-inset-top, 0px)); }
+.stsheet .bar .t-l { font-size: 11px; }
+.stsheet .acct { margin-top: 28px; gap: 18px; }
+.avatar.big { width: 96px; height: 96px; font-family: var(--f-dot); font-size: 72px; line-height: 1; }
+.acct-t .t-l { display: block; margin-bottom: 6px; }
+.acct .nm { font-size: 56px; letter-spacing: .005em; }
+.acct .nm i { font-style: normal; color: var(--accent); }
+.st-h { margin: 26px 0 10px; font-size: 10px; letter-spacing: .18em; color: var(--mute); }
+.st-card { background: var(--surface); border-radius: 22px; padding: 0 18px; }
+.st-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 10px 0; }
+.st-row + .st-row { border-top: 1px dashed var(--line); }
+.st-k { display: block; font-size: 12px; letter-spacing: .1em; }
+.st-s { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .1em; color: var(--mute); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 20px; padding: 3px; }
+.seg button { height: 32px; padding: 0 12px; border-radius: 16px; font-size: 11px; letter-spacing: .1em; color: var(--fg); }
+.seg button.on { background: var(--fg); color: var(--bg); }
+.sw { display: flex; gap: 6px; }
+.sw button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
+.sw i { width: 22px; height: 22px; border-radius: 50%; }
+.sw button.on { box-shadow: 0 0 0 2px var(--fg) inset; }
+[data-acc="orange"] i { background: var(--acc-orange); }
+[data-acc="red"] i { background: var(--acc-red); }
+[data-acc="blue"] i { background: var(--acc-blue); }
+[data-acc="mono"] i { background: var(--fg); }
+.tog { width: 50px; height: 30px; border-radius: 15px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.tog i { position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--on-accent); transition: transform .15s; }
+.tog[aria-checked="true"] { background: var(--accent); }
+.tog[aria-checked="true"] i { transform: translateX(20px); }
+.st-def { height: 36px; padding: 0 14px; }
+.stsheet #st-out { margin-top: 22px; min-height: 54px; }
+.st-ver { margin-top: 24px; text-align: center; font-size: 10px; letter-spacing: .14em; color: var(--mute); }
+:root[data-norem] .tm svg { display: none; }
 
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }

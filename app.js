@@ -61,14 +61,31 @@
   }
 
   /* ---------- theme, toast, screens ---------- */
+  /* UI settings live in their own key, apart from the account data */
+  var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", red: "RÖD", blue: "BLÅ", mono: "MONO" };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00" };
+  function loadSettings() {
+    try {
+      var s = JSON.parse(localStorage.getItem(SKEY));
+      if (s) { for (var k in settings) if (k in s) settings[k] = s[k]; }
+      else if (state.theme) settings.theme = state.theme;
+    } catch (e) {}
+  }
+  function saveSettings() { try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch (e) {} }
+  var darkMq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function isDark() { return settings.theme === "dark" || (settings.theme === "system" && !!darkMq && darkMq.matches); }
   function applyTheme() {
     var r = document.documentElement;
-    if (state.theme === "system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme", state.theme);
-    var label = state.theme === "system" ? "AUTO" : state.theme === "light" ? "LJUS" : "MÖRK";
-    Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) { b.textContent = label; });
+    if (settings.theme === "system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme", settings.theme);
+    if (settings.accent === "orange") r.removeAttribute("data-accent"); else r.setAttribute("data-accent", settings.accent);
+    r.toggleAttribute("data-norem", !settings.remind);
+    var label = isDark() ? "MÖRK" : "LJUS";
+    Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) { b.textContent = label; b.setAttribute("aria-label", "Tema: " + label.toLowerCase() + ". Tryck för att byta"); });
+    if (!$("settings").hidden) renderSettings();
   }
+  if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", applyTheme);
   Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) {
-    b.onclick = function () { state.theme = state.theme === "system" ? "light" : state.theme === "light" ? "dark" : "system"; applyTheme(); save(); };
+    b.onclick = function () { settings.theme = isDark() ? "light" : "dark"; applyTheme(); saveSettings(); };
   });
   var toastT = null;
   function toast(msg) {
@@ -152,7 +169,7 @@
 
     var hm = pad(hr) + ":" + pad(now.getMinutes()), timed = sorted(ts).filter(function (t) { return !t.d && t.time; });
     var nx = timed.filter(function (t) { return t.time >= hm; })[0] || timed[0], a, b, c;
-    if (nx) { a = nx.t; b = "IDAG · " + nx.time; c = "MED PÅMINNELSE"; }
+    if (nx) { a = nx.t; b = "IDAG · " + nx.time; c = settings.remind ? "MED PÅMINNELSE" : "PÅMINNELSER AV"; }
     else if (n && !left) {
       var nd = null;
       for (i = 1; i < 7 && !nd; i++) { var dk = addDays(now, i), rem = list(key(dk)).filter(function (t) { return !t.d; }).length; if (rem) nd = { d: dk, n: rem }; }
@@ -491,11 +508,11 @@
     });
     $("ed-clock").textContent = ed.time || "--:--";
     var di = (d.getDay() + 6) % 7;
-    $("ed-cap").textContent = ed.time ? "PÅMINNER DIG " + (ed.day === nowK ? "IDAG" : DAYS[di]) : "INGEN PÅMINNELSE";
-    $("ed-cap").classList.toggle("on", !!ed.time);
+    $("ed-cap").textContent = ed.time && !settings.remind ? "PÅMINNELSER AV" : ed.time ? "PÅMINNER DIG " + (ed.day === nowK ? "IDAG" : DAYS[di]) : "INGEN PÅMINNELSE";
+    $("ed-cap").classList.toggle("on", !!ed.time && settings.remind);
   }
   function stepTime(min) {
-    var p = (ed.time || "09:00").split(":"), t = ed.time ? +p[0] * 60 + +p[1] + min : +p[0] * 60 + +p[1];
+    var p = (ed.time || settings.defTime).split(":"), t = ed.time ? +p[0] * 60 + +p[1] + min : +p[0] * 60 + +p[1];
     t = (Math.round(t / 15) * 15 + 1440) % 1440;
     ed.time = pad(Math.floor(t / 60)) + ":" + pad(t % 60); renderEdit();
   }
@@ -508,7 +525,7 @@
   $("ed-chips").addEventListener("click", function (e) {
     var c = e.target.closest("[data-et]"); if (!c) return;
     var v = c.getAttribute("data-et"), ti = $("ed-time");
-    if (v === "other") { ti.hidden = false; ti.value = ed.time || "12:00"; ed.time = ti.value; }
+    if (v === "other") { ti.hidden = false; ti.value = ed.time || settings.defTime; ed.time = ti.value; }
     else { ti.hidden = true; ed.time = v; }
     renderEdit();
   });
@@ -585,7 +602,7 @@
   $("ad-chips").addEventListener("click", function (e) {
     var c = e.target.closest("[data-at]"); if (!c) return;
     var v = c.getAttribute("data-at"), ti = $("ad-time");
-    if (v === "other") { ti.hidden = false; if (!ti.value) ti.value = "12:00"; addTime = ti.value; }
+    if (v === "other") { ti.hidden = false; if (!ti.value) ti.value = settings.defTime; addTime = ti.value; }
     else { ti.hidden = true; addTime = v; }
     renderAdd();
   });
@@ -604,20 +621,36 @@
     vv.addEventListener("resize", kb); vv.addEventListener("scroll", kb);
   }
 
-  /* ---------- account ---------- */
-  var clearArmed = false;
+  /* ---------- inställningar ---------- */
+  function renderSettings() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-set-theme]"), function (b) {
+      var on = b.getAttribute("data-set-theme") === settings.theme; b.classList.toggle("on", on); b.setAttribute("aria-checked", on);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-acc]"), function (b) {
+      var on = b.getAttribute("data-acc") === settings.accent; b.classList.toggle("on", on); b.setAttribute("aria-checked", on);
+    });
+    $("st-acc-n").textContent = ACC[settings.accent];
+    $("st-rem").setAttribute("aria-checked", settings.remind);
+    $("st-def").value = settings.defTime;
+  }
   function openSettings() {
     var u = cur(); if (!u) return;
-    $("st-av").textContent = u.name.charAt(0).toUpperCase(); $("st-name").textContent = u.name; $("st-mail").textContent = state.session.toUpperCase();
-    clearArmed = false; $("st-clear").textContent = "Rensa alla uppgifter"; $("settings").hidden = false;
+    $("st-av").textContent = u.name.charAt(0).toUpperCase(); $("st-name").textContent = u.name.split(" ")[0].toUpperCase();
+    $("settings").hidden = false; $("settings").scrollTop = 0; renderSettings(); $("st-close").focus();
   }
+  function closeSettings() { $("settings").hidden = true; $("over-prof").focus(); }
   $("over-prof").onclick = openSettings;
-  $("st-close").onclick = function () { $("settings").hidden = true; };
-  $("settings").addEventListener("click", function (e) { if (e.target === $("settings")) $("settings").hidden = true; });
-  $("st-clear").onclick = function () {
-    if (!clearArmed) { clearArmed = true; $("st-clear").textContent = "Tryck igen för att bekräfta"; return; }
-    cur().tasks = {}; save(); clearArmed = false; $("settings").hidden = true; render(); renderOver(); toast("ALLA UPPGIFTER RENSADE");
-  };
+  $("st-close").onclick = closeSettings;
+  $("st-done").onclick = closeSettings;
+  swipeDown(document.querySelector("#settings .panel"), closeSettings, function () { return $("settings").scrollTop === 0; });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-set-theme]"), function (b) {
+    b.onclick = function () { settings.theme = b.getAttribute("data-set-theme"); applyTheme(); saveSettings(); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-acc]"), function (b) {
+    b.onclick = function () { settings.accent = b.getAttribute("data-acc"); applyTheme(); saveSettings(); };
+  });
+  $("st-rem").onclick = function () { settings.remind = !settings.remind; applyTheme(); saveSettings(); renderSettings(); };
+  $("st-def").addEventListener("change", function () { if ($("st-def").value) { settings.defTime = $("st-def").value; saveSettings(); } });
   $("st-out").onclick = function () { state.session = null; save(); $("settings").hidden = true; show("welcome"); toast("DU ÄR UTLOGGAD"); };
 
   /* ---------- calendar ---------- */
@@ -655,11 +688,11 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) $("settings").hidden = true; else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
+    if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
 
   /* ---------- start ---------- */
-  load(); applyTheme();
+  load(); loadSettings(); applyTheme();
   show(cur() ? "home" : "welcome");
   ensureDemo();
 })();
