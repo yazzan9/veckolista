@@ -233,5 +233,59 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .avatar.sm { width: 36px; height: 36px; font-size: 20px; }
 #s-over .lblv { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
 
+/* översikt */
+#s-over { padding-inline: 4px; }
+.greet { margin-top: 38px; }
+.g-l { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
+.g-n { margin: 10px 0 0; font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
+.g-n i { font-style: normal; color: var(--accent); }
+.g-d { margin-top: 10px; font-size: 11px; letter-spacing: .14em; color: var(--mute); }
+.tile { position: relative; border-radius: 28px; background: var(--surface); padding: 18px 20px; margin-top: 12px; }
+.greet + .tile { margin-top: 28px; }
+.tilelink { position: absolute; inset: 0; border-radius: 28px; z-index: 1; }
+.tile .plus, .tile .plan-pill, .tile .wmatrix, .tile .tlink { position: relative; z-index: 2; }
+.t-row { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+.t-l { font-size: 10px; letter-spacing: .18em; color: var(--mute); }
+.tlink { padding: 8px 0; }
+.quote { background: var(--fg); color: var(--bg); padding: 22px 22px 20px; }
+.quote .t-l { color: var(--bg); opacity: .75; }
+.qdot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.q-t { font-family: var(--f-display); font-weight: 800; font-size: 32px; line-height: 1.05; text-transform: uppercase; margin: 14px 0 18px; }
+.q-f { font-size: 10px; letter-spacing: .14em; opacity: .75; }
+
+.idag { min-height: 152px; }
+.idag .t-row { min-height: 0; }
+.plus { position: absolute; right: 20px; top: 14px; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 26px; line-height: 1; display: grid; place-items: center; }
+.i-main { display: flex; align-items: flex-end; gap: 12px; margin-top: 6px; min-height: 74px; }
+.i-n { font-family: var(--f-dot); font-weight: 800; font-size: 72px; line-height: .86; letter-spacing: .02em; }
+.i-of { font-size: 11px; letter-spacing: .14em; color: var(--mute); padding-bottom: 4px; }
+.i-r { margin-left: auto; font-family: var(--f-display); font-weight: 800; font-size: 32px; line-height: 1; color: var(--accent); text-transform: uppercase; }
+.plan-pill { margin-left: auto; align-self: center; height: 44px; padding: 0 22px; border-radius: 22px; background: var(--accent); color: var(--on-accent); font-size: 11px; letter-spacing: .14em; }
+.i-dots { display: flex; gap: 10px; margin-top: 16px; }
+.i-dots i { width: 18px; height: 18px; border-radius: 50%; }
+.i-dots .fin { background: var(--fg); }
+.i-dots .rem { background: var(--accent); }
+.i-dots .ring { border: 1.5px solid var(--dot-off); }
+.idag.done .i-dots .rem { background: var(--accent); }
+
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; margin-top: 12px; }
+.duo .tile { margin-top: 0; }
+.vecka { background: var(--accent); color: var(--on-accent); min-height: 130px; }
+.vecka .t-l { color: var(--on-accent); opacity: .9; }
+.vecka .grid3 { position: absolute; right: 18px; top: 16px; margin: 0; padding: 0; }
+.vecka .grid3 i, .vecka:hover .grid3 i:not(:nth-child(5)) { background: var(--on-accent); }
+.v-n { font-family: var(--f-dot); font-weight: 800; font-size: 64px; line-height: .86; letter-spacing: .02em; margin-top: 12px; }
+.v-r { margin-top: 12px; font-size: 10px; letter-spacing: .1em; }
+.nasta { min-height: 120px; }
+.n-t { margin-top: 10px; font-family: var(--f-display); font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; }
+.n-a { margin-top: 8px; font-size: 11px; letter-spacing: .1em; color: var(--accent); }
+.n-b { margin-top: 6px; font-size: 10px; letter-spacing: .08em; color: var(--mute); }
+
+.veckan .t-row { min-height: 0; }
+.wmatrix { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; margin-top: 8px; text-align: center; }
+.wmatrix .mcol:hover { background: none; }
+.w-streak { margin-top: 12px; font-size: 10px; letter-spacing: .14em; color: var(--mute); }
+@media (max-width: 380px) { .g-n { font-size: 56px; } .q-t { font-size: 28px; } .v-n { font-size: 56px; } }
+
 @media (max-width: 380px) { .wk .num { font-size: 88px; } .name { font-size: 34px; } .calmonth { font-size: 36px; } .calyear { font-size: 72px; } .wel .big { font-size: 180px; } .ac-n { font-size: 120px; } .ac-t b { font-size: 40px; } .ttl { font-size: 48px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

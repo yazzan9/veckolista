@@ -99,8 +99,91 @@
       if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
     });
     if (changed) { window.scrollTo(0, 0); scr.classList.remove("tabin"); void scr.offsetWidth; scr.classList.add("tabin"); }
-    if (!over) render();
+    if (over) renderOver(); else render();
   }
+
+  /* ---------- översikt ---------- */
+  var QUOTES = [
+    "Det räcker att börja. Resten kommer.",
+    "En liten uppgift i taget.",
+    "Gör det enkla först.",
+    "Lugn och framåt.",
+    "Idag är en bra dag att börja.",
+    "Små steg räknas också.",
+    "Planera lite, gör lite mer.",
+    "Det viktiga får plats i dag.",
+    "Färdigt är bättre än perfekt.",
+    "Ta en sak åt gången."
+  ];
+  function dayOfYear(d) { return Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(d.getFullYear(), 0, 0)) / 864e5); }
+  function plural(n) { return n + (n === 1 ? " UPPGIFT" : " UPPGIFTER"); }
+  function dotsHtml(ts, cls) {
+    var h = "";
+    ts.slice(0, MAXDOTS).forEach(function (t) { h += '<i class="' + cls(t) + '"></i>'; });
+    return h;
+  }
+  function renderOver() {
+    var u = cur(); if (!u) return;
+    var now = new Date(), nk = key(now), idx = (now.getDay() + 6) % 7, hr = now.getHours();
+    var ms = mondayOf(now), i;
+    $("o-greet").textContent = hr < 10 ? "GOD MORGON" : hr < 18 ? "GOD DAG" : "GOD KVÄLL";
+    $("o-name").textContent = u.name.split(" ")[0].toUpperCase();
+    var dl = DAYS[idx] + " · " + now.getDate() + " " + MON[now.getMonth()];
+    $("o-date").textContent = dl + " · VECKA " + isoWeek(now);
+    $("o-quote").textContent = QUOTES[dayOfYear(now) % QUOTES.length];
+    $("o-quote-d").textContent = now.getDate() + " " + MON[now.getMonth()] + " · NYTT VARJE DAG";
+
+    var ts = list(nk), dn = ts.filter(function (t) { return t.d; }).length, n = ts.length, left = n - dn;
+    var box = $("o-idag"), st = !n ? "empty" : left ? "tasks" : "done";
+    box.className = "tile idag " + st;
+    $("o-done").textContent = dn;
+    $("o-of").textContent = "/ " + n + " KLARA";
+    $("o-right").textContent = st === "done" ? "ALLT KLART" : left + " KVAR";
+    $("o-add").hidden = st === "empty";
+    $("o-plan").hidden = st !== "empty";
+    $("o-right").hidden = st === "empty";
+    $("o-dots").innerHTML = st === "empty" ? "<i class=\"ring\"></i><i class=\"ring\"></i><i class=\"ring\"></i><i class=\"ring\"></i>"
+      : dotsHtml(ts, function (t) { return st === "tasks" && t.d ? "fin" : "rem"; });
+
+    $("o-wknum").textContent = pad(isoWeek(now));
+    var me = addDays(ms, 6);
+    $("o-range").textContent = ms.getDate() + " " + MON[ms.getMonth()] + " – " + me.getDate() + " " + MON[me.getMonth()];
+
+    var hm = pad(hr) + ":" + pad(now.getMinutes()), timed = sorted(ts).filter(function (t) { return !t.d && t.time; });
+    var nx = timed.filter(function (t) { return t.time >= hm; })[0] || timed[0], a, b, c;
+    if (nx) { a = nx.t; b = "IDAG · " + nx.time; c = "MED PÅMINNELSE"; }
+    else if (n && !left) {
+      var nd = null;
+      for (i = 1; i < 7 && !nd; i++) { var dk = addDays(now, i), rem = list(key(dk)).filter(function (t) { return !t.d; }).length; if (rem) nd = { d: dk, n: rem }; }
+      a = "INGET MER"; b = nd ? "NÄSTA: " + DAYS[(nd.d.getDay() + 6) % 7] : "NÄSTA: INGET PLANERAT"; c = nd ? plural(nd.n) : "NJUT AV DAGEN";
+    } else { a = "INGET ÄNNU"; b = "ÄNNU INGEN TID"; c = "TID = PÅMINNELSE"; }
+    $("o-n1").textContent = a; $("o-n2").textContent = b; $("o-n3").textContent = c;
+
+    var tot = 0, tdn = 0, mh = "", streak = 0, dates = [];
+    for (i = 0; i < 7; i++) {
+      var d = addDays(ms, i), k = key(d), wt = list(k), wd = wt.filter(function (t) { return t.d; }).length, isT = k === nk;
+      tot += wt.length; tdn += wd; dates.push(wt);
+      var dh = "";
+      if (!wt.length) dh = '<i class="dot ring"></i>';
+      else dh = dotsHtml(wt, function (t) { return "dot" + (t.d ? " done" : ""); }) + (wt.length > MAXDOTS ? '<span class="more">+' + (wt.length - MAXDOTS) + "</span>" : "");
+      mh += '<span class="mcol' + (isT ? " today" : "") + '"><span class="l">' + LET[i] + "</span>" + dh + "</span>";
+    }
+    $("o-matrix").innerHTML = mh;
+    $("o-wsum").textContent = tdn + " / " + tot + " KLARA";
+    for (i = idx; i >= 0; i--) {
+      var w = dates[i], full = w.length && w.every(function (t) { return t.d; });
+      if (full) streak++; else if (i !== idx) break;
+    }
+    $("o-streak").textContent = streak ? "SERIE: " + streak + (streak === 1 ? " DAG" : " DAGAR") : "INGEN SERIE ÄNNU";
+  }
+  function goPlanToday(addFocus) {
+    var now = new Date(); todayKey = key(now); weekStart = mondayOf(now); openKey = todayKey;
+    if (addFocus) focusKey = todayKey;
+    setTab("plan");
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-plan]"), function (b) { b.onclick = function () { goPlanToday(false); }; });
+  $("o-add").onclick = function () { goPlanToday(true); };
+  $("o-plan").onclick = function () { goPlanToday(true); };
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
     b.onclick = function () { setTab(b.getAttribute("data-tab")); };
   });
@@ -331,7 +414,7 @@
   $("settings").addEventListener("click", function (e) { if (e.target === $("settings")) $("settings").hidden = true; });
   $("st-clear").onclick = function () {
     if (!clearArmed) { clearArmed = true; $("st-clear").textContent = "Tryck igen för att bekräfta"; return; }
-    cur().tasks = {}; save(); clearArmed = false; $("settings").hidden = true; render(); toast("ALLA UPPGIFTER RENSADE");
+    cur().tasks = {}; save(); clearArmed = false; $("settings").hidden = true; render(); renderOver(); toast("ALLA UPPGIFTER RENSADE");
   };
   $("st-out").onclick = function () { state.session = null; save(); $("settings").hidden = true; show("welcome"); toast("DU ÄR UTLOGGAD"); };
 
@@ -358,13 +441,15 @@
   function openCal() { calMonth = monthOfWeek(); renderCal(); cal.hidden = false; $("calclose").focus(); }
   function closeCal() { cal.hidden = true; $("wkbtn").focus(); }
   $("wkbtn").onclick = openCal;
+  $("o-wk").onclick = openCal;
+  $("o-matrix").onclick = openCal;
   $("calclose").onclick = closeCal;
-  $("caltoday").onclick = function () { todayKey = key(new Date()); setWeek(mondayOf(new Date())); closeCal(); };
+  $("caltoday").onclick = function () { todayKey = key(new Date()); setWeek(mondayOf(new Date())); closeCal(); if (tab === "over") setTab("plan"); };
   $("calprev").onclick = function () { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCal(); };
   $("calnext").onclick = function () { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCal(); };
   $("calgrid").addEventListener("click", function (e) {
     var row = e.target.closest("[data-w]"); if (!row) return;
-    setWeek(fromKey(row.getAttribute("data-w"))); closeCal();
+    setWeek(fromKey(row.getAttribute("data-w"))); closeCal(); if (tab === "over") setTab("plan");
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;

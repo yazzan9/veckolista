@@ -67,6 +67,52 @@
     <button class="pill themebtn" aria-label="Byt tema">AUTO</button>
     <button class="avatar sm" id="over-prof" aria-label="Inställningar">A</button>
   </div>
+  <div class="greet">
+    <div class="g-l" id="o-greet">GOD DAG</div>
+    <h1 class="g-n"><span id="o-name">DU</span><i aria-hidden="true">.</i></h1>
+    <div class="g-d" id="o-date"></div>
+  </div>
+
+  <section class="tile quote" aria-label="Dagens citat">
+    <div class="t-row"><span class="t-l">DAGENS CITAT</span><i class="qdot" aria-hidden="true"></i></div>
+    <p class="q-t" id="o-quote"></p>
+    <div class="q-f" id="o-quote-d"></div>
+  </section>
+
+  <section class="tile idag" id="o-idag" aria-label="Idag">
+    <button class="tilelink" data-plan="today" aria-label="Öppna idag i Plan"></button>
+    <div class="t-row"><span class="t-l">IDAG</span><button class="plus" id="o-add" aria-label="Lägg till uppgift">+</button></div>
+    <div class="i-main">
+      <div class="i-n" id="o-done">0</div>
+      <div class="i-of" id="o-of">/ 0 KLARA</div>
+      <div class="i-r" id="o-right"></div>
+      <button class="plan-pill" id="o-plan">PLANERA DAGEN <span aria-hidden="true">→</span></button>
+    </div>
+    <div class="i-dots" id="o-dots" aria-hidden="true"></div>
+  </section>
+
+  <div class="duo">
+    <section class="tile vecka" aria-label="Vecka">
+      <button class="tilelink" id="o-wk" aria-label="Öppna kalender"></button>
+      <span class="t-l">VECKA</span>
+      <span class="grid3" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <div class="v-n" id="o-wknum">00</div>
+      <div class="v-r" id="o-range"></div>
+    </section>
+    <section class="tile nasta" aria-label="Nästa">
+      <button class="tilelink" data-plan="today" aria-label="Öppna nästa uppgift i Plan"></button>
+      <span class="t-l">NÄSTA</span>
+      <div class="n-t" id="o-n1"></div>
+      <div class="n-a" id="o-n2"></div>
+      <div class="n-b" id="o-n3"></div>
+    </section>
+  </div>
+
+  <section class="tile veckan" aria-label="Veckan">
+    <div class="t-row"><button class="t-l tlink" data-plan="today">VECKAN</button><span class="t-l" id="o-wsum"></span></div>
+    <button class="wmatrix" id="o-matrix" aria-label="Öppna kalender"></button>
+    <div class="w-streak" id="o-streak"></div>
+  </section>
 </main>
 
 <!-- Huvudsida (Plan) -->
