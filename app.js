@@ -790,7 +790,7 @@
   });
 
   /* ---------- figur: a 9x9 dot-matrix companion next to the name ----------
-     each figure maps time (ms) to 81 dots: 0 off (dotOff), 1 on (fg), 2 accent */
+     each figure maps time (ms) to 81 dots: 0 empty (not drawn), 1 on (fg), 2 accent */
   var FN = 9;
   function fgrid() { return new Uint8Array(FN * FN); }
   function fput(g, x, y, v) { if (x >= 0 && y >= 0 && x < FN && y < FN && g[y * FN + x] < v) g[y * FN + x] = v; }
@@ -826,21 +826,22 @@
     return fpose(Math.floor(c / 200) % 2 ? D_PANT2 : D_PANT1);
   }
 
-  /* ROBOT: eyes glance around in steps and blink; orange antenna leans with the gaze, orange mouth when it talks */
+  /* ROBOT: a head rising from behind the card; eyes glance around in steps and blink,
+     the orange antenna leans with the gaze, the mouth lights orange when it talks and smiles */
   var GAZE = [[0, 0], [-1, 0], [-1, 0], [0, 0], [1, 0], [1, -1], [0, 0], [0, 0]];
   function figRobot(t) {
     var g = fgrid(), c = t % 6400, ph = Math.floor(c / 800), p = GAZE[ph], blink = c % 3200 > 3060, x;
     [2, 5].forEach(function (ex) {
-      fput(g, ex + p[0], 4 + p[1], 1); fput(g, ex + 1 + p[0], 4 + p[1], 1);
-      if (!blink) { fput(g, ex + p[0], 3 + p[1], 1); fput(g, ex + 1 + p[0], 3 + p[1], 1); }
+      fput(g, ex + p[0], 3 + p[1], 1); fput(g, ex + 1 + p[0], 3 + p[1], 1);
+      if (!blink) { fput(g, ex + p[0], 2 + p[1], 1); fput(g, ex + 1 + p[0], 2 + p[1], 1); }
     });
-    if (ph === 6) { fput(g, 2, 6, 2); fput(g, 6, 6, 2); for (x = 3; x <= 5; x++) fput(g, x, 7, 1); }
-    else if (ph === 4 && Math.floor(t / 150) % 2) { for (x = 3; x <= 5; x++) { fput(g, x, 6, 2); fput(g, x, 8, 2); } }
-    else for (x = 3; x <= 5; x++) fput(g, x, 7, 1);
-    fput(g, 4, 1, 1); fput(g, 4 + p[0], 0, 2);
+    if (ph === 6) { fput(g, 2, 4, 2); fput(g, 6, 4, 2); for (x = 3; x <= 5; x++) fput(g, x, 5, 1); }
+    else if (ph === 4 && Math.floor(t / 150) % 2) { for (x = 3; x <= 5; x++) { fput(g, x, 4, 2); fput(g, x, 5, 2); } }
+    else for (x = 3; x <= 5; x++) fput(g, x, 5, 1);
+    for (x = 1; x <= 7; x++) fput(g, x, 7, 1);
+    fput(g, 4, 6, 1); fput(g, 4, 1, 1); fput(g, 4 + p[0], 0, 2);
     return g;
   }
-
   /* KATT: orange eyes that look around and blink slowly, an ear that twitches */
   var CAT = [".x.....x.", ".xx...xx.", ".xxxxxxx.", ".x.....x.", ".x.....x.", "xx..x..xx", ".x.x.x.x.", "x.xxxxx.x", "........."];
   var CAT_LOOK = [0, -1, -1, 0, 1, 1, 0, 0];
@@ -880,13 +881,14 @@
         for (y = 0; y < FN; y++) for (x = 0; x < FN; x++) { d = (x + y) / 16 * 0.85; if (p < d) g[y * FN + x] = o[y * FN + x]; else if (p < d + 0.15) g[y * FN + x] = 1; }
       }
     }
+    g[7 * FN + 7] = g[7 * FN + 8] = 0; // these would peek out through the card's rounded corner
     var k = g.join("");
     if (k === fig.last) return;
     fig.last = k;
     var cv = $("o-fig-c"), S = 120, dpr = window.devicePixelRatio || 1, pitch = S / FN, rad = pitch * 0.37, ctx, i;
     if (cv.width !== Math.round(S * dpr)) { cv.width = cv.height = Math.round(S * dpr); }
     ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S, S);
-    for (i = 0; i < 3; i++) {
+    for (i = 1; i < 3; i++) {
       ctx.fillStyle = fig.col[i]; ctx.beginPath();
       for (y = 0; y < FN; y++) for (x = 0; x < FN; x++) if (g[y * FN + x] === i) { ctx.moveTo(pitch * (x + 0.5) + rad, pitch * (y + 0.5)); ctx.arc(pitch * (x + 0.5), pitch * (y + 0.5), rad, 0, 2 * Math.PI); }
       ctx.fill();

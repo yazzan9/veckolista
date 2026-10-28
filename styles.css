@@ -256,15 +256,15 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 /* översikt */
 .greet { margin-top: 18px; position: relative; }
 .g-l { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
-.g-row { display: flex; align-items: center; padding-right: 128px; }
-/* the figure stands over the top edge of the card below, half on the page and half on the card */
-.fig { position: absolute; right: -6px; top: 22px; z-index: 3; width: 132px; height: 132px; padding: 6px; border-radius: 24px; background: var(--bg); }
+.g-row { display: flex; align-items: center; padding-right: 132px; }
+/* the figure rises from behind the card below: its bottom two dot rows sit under the card edge */
+.fig { position: absolute; right: 0; bottom: -54px; z-index: 0; width: 120px; height: 120px; border-radius: 18px; }
 .fig canvas { display: block; width: 120px; height: 120px; }
 .g-n { margin: 0; flex: 0 1 auto; min-width: 0; white-space: nowrap; font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
 .g-n i { font-style: normal; color: var(--accent); }
 .g-d { margin-top: 10px; font-size: 11px; letter-spacing: .14em; color: var(--mute); }
 .tile { position: relative; border-radius: 28px; background: var(--surface); padding: 18px 20px; margin-top: 12px; }
-.greet + .tile { margin-top: 28px; }
+.greet + .tile { margin-top: 28px; z-index: 1; }
 .tilelink { position: absolute; inset: 0; border-radius: 28px; z-index: 1; }
 .tile .plus, .tile .plan-pill, .tile .wmatrix, .tile .tlink { position: relative; z-index: 2; }
 .t-row { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
