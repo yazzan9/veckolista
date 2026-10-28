@@ -155,7 +155,7 @@
     var u = cur(); if (!u) return;
     var now = new Date(), nk = key(now), idx = (now.getDay() + 6) % 7, hr = now.getHours();
     var ms = mondayOf(now), i;
-    $("o-greet").textContent = hr < 10 ? "GOD MORGON" : hr < 18 ? "GOD DAG" : "GOD KVÄLL";
+    $("o-greet").textContent = hr < 5 ? "GOD NATT" : hr < 10 ? "GOD MORGON" : hr < 18 ? "GOD DAG" : "GOD KVÄLL";
     $("o-name").textContent = u.name.split(" ")[0].toUpperCase();
     var dl = DAYS[idx] + " · " + now.getDate() + " " + MON[now.getMonth()];
     $("o-date").textContent = dl + " · VECKA " + isoWeek(now);
@@ -734,6 +734,21 @@
     if (e.key !== "Escape") return;
     if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
+
+  /* ---------- keep "today" true when the app stays open past midnight ---------- */
+  function tick() {
+    if (!cur() || $("s-over").hidden && $("s-home").hidden && $("s-add").hidden) return;
+    var nk = key(new Date());
+    if (nk !== todayKey) {
+      var wasCurrent = key(weekStart) === key(mondayOf(fromKey(todayKey)));
+      todayKey = nk;
+      if (wasCurrent) { weekStart = mondayOf(new Date()); openKey = firstMissedOr(todayKey); }
+      render(); if (!$("s-add").hidden) renderAdd();
+    }
+    if (!$("s-over").hidden) renderOver();
+  }
+  setInterval(tick, 60000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) tick(); });
 
   /* ---------- start ---------- */
   load(); loadSettings(); applyTheme();
