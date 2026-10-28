@@ -388,6 +388,10 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .task.swiped { transform: translateX(-40px); }
 .swdel { position: absolute; right: -52px; top: 50%; width: 46px; height: 40px; margin-top: -20px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-size: 18px; visibility: hidden; }
 .task.swiped .swdel { visibility: visible; }
+/* one X at a time: orange inline X for mouse, swipe action on touch */
+.act.x, .act.x:hover { color: var(--accent); }
+.task.swiped .act.x { visibility: hidden; }
+@media (hover: none) and (pointer: coarse) { .act.x { display: none; } }
 
 .undo { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: min(350px, calc(100% - 40px)); min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 22px; border-radius: 26px; background: var(--fg); color: var(--bg); font-size: 11px; letter-spacing: .1em; }
 .undo i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
