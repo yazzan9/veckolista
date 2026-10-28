@@ -33,7 +33,7 @@
 
   var today = new Date(), todayKey = key(today);
   var state = { users: {}, session: null, theme: "system" };
-  var weekStart = mondayOf(today), openKey = todayKey, focusKey = null, justDone = null;
+  var weekStart = mondayOf(today), openKey = todayKey, focusKey = null, pulseId = null;
   var reduceMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function scrollOpenDay() { var o = document.querySelector(".day.open"); if (o) o.scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" }); }
 
@@ -327,7 +327,7 @@
       var dots = "";
       if (!ts.length) dots = '<span class="dot ring"></span>';
       else {
-        ts.slice(0, MAXDOTS).forEach(function (t) { dots += '<span class="dot' + (t.d ? " done" : "") + (t.id === justDone ? " pulse" : "") + '"></span>'; });
+        ts.slice(0, MAXDOTS).forEach(function (t) { dots += '<span class="dot' + (t.d ? " done" : "") + (t.id === pulseId ? " pulse" : "") + '"></span>'; });
         if (ts.length > MAXDOTS) dots += '<span class="more">+' + (ts.length - MAXDOTS) + "</span>";
       }
       mh += '<button class="mcol' + (k === openKey ? " on" : "") + (k === openKey || (future && idx === 0) ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
@@ -343,7 +343,7 @@
         sorted(ts).forEach(function (t) {
           var ms = dayMiss && !t.d;
           dh += '<li class="task' + (t.d ? " done" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
-            '<button class="chk' + (t.id === justDone ? " pulse" : "") + '" data-act="tog" aria-label="Klar: ' + esc(t.t) + '" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
+            '<button class="chk' + (t.id === pulseId ? " pulse" : "") + '" data-act="tog" aria-label="Klar: ' + esc(t.t) + '" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
             '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + esc(t.t) + "</span>" +
             (past ? "" : '<button class="act' + (ms ? " mvm" : "") + '" data-act="mv" aria-label="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '" title="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '">→</button>' +
             '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>' +
@@ -379,7 +379,7 @@
     var rt = past ? '<span class="fin">AVSLUTAD</span>' : missed ? '<span class="miss">' + missed + " MISSADE</span>" : total ? "<span>" + (total - done) + " KVAR</span>" : "<span>TOM VECKA</span>";
     $("sum").innerHTML = "<span><b>" + done + " / " + total + "</b> KLARA</span>" + rt;
     if (focusKey) { var inp = $("add-" + focusKey); if (inp) inp.focus(); focusKey = null; }
-    justDone = null;
+    pulseId = null;
   }
 
   function setWeek(ws) {
@@ -428,7 +428,7 @@
     var pt = e.target.closest("[data-pt]");
     if (pt) { var pk = pt.getAttribute("data-k"), pv = pt.getAttribute("data-pt"); pendFor(pk); pend.time = pv === "INGEN" ? "" : pv; if (!pend.time) pend.rem = false; updatePend(pk); return; }
     var c = e.target.closest("[data-clear]");
-    if (c) { var ck = c.getAttribute("data-clear"); allTasks()[ck] = list(ck).filter(function (t) { return !t.d; }); save(); render(); return; }
+    if (c) { clearDone(c.getAttribute("data-clear")); return; }
     var sg = e.target.closest("[data-sug]");
     if (sg) { push(sg.getAttribute("data-k"), { id: uid(), t: sg.getAttribute("data-sug"), d: false }); save(); render(); return; }
     var gt = e.target.closest("[data-goto]");
@@ -441,13 +441,12 @@
     var act = btn.getAttribute("data-act");
     if (act === "del") { delTask(k2, id); return; }
     if (act === "tog") {
-      arr[idx].d = !arr[idx].d; justDone = arr[idx].d ? id : null;
+      arr[idx].d = !arr[idx].d; pulseId = arr[idx].d ? id : null;
       save(); render();
       var nc = daysEl.querySelector('.task[data-id="' + id + '"] .chk'); if (nc) nc.focus({ preventScroll: true });
       return;
     }
-    else if (act === "mv") { var t = arr.splice(idx, 1)[0], nk2 = btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)); push(nk2, t); }
-    allTasks()[k2] = arr; save(); render();
+    if (act === "mv") moveTask(k2, id, btn.classList.contains("mvm") ? key(new Date()) : key(addDays(fromKey(k2), 1)));
   });
   daysEl.addEventListener("change", function (e) {
     var ti = e.target.closest(".tinp"); if (!ti) return;
@@ -481,21 +480,36 @@
   });
   ["pointerup", "pointercancel"].forEach(function (ev) { daysEl.addEventListener(ev, function () { sw = null; }); });
 
-  var undoT = null, lastDel = null;
+  /* every destructive or moving action offers ÅNGRA for 6 s; restore puts things back in place */
+  var undoT = null, undoFn = null;
+  function offerUndo(msg, restore) {
+    undoFn = restore; $("toast").hidden = true;
+    $("undo-t").textContent = msg; $("undo").hidden = false;
+    clearTimeout(undoT); undoT = setTimeout(function () { $("undo").hidden = true; undoFn = null; }, 6000);
+  }
+  function insertAt(k, i, t) { var a = list(k); a.splice(Math.min(i, a.length), 0, t); allTasks()[k] = a; }
+  function takeOut(k, id) { var a = list(k), i = a.findIndex(function (t) { return t.id === id; }); return i < 0 ? null : { i: i, t: a.splice(i, 1)[0] }; }
   function delTask(k, id) {
-    var arr = list(k), idx = arr.findIndex(function (t) { return t.id === id; });
-    if (idx < 0) return;
-    lastDel = { k: k, idx: idx, t: arr.splice(idx, 1)[0] };
-    allTasks()[k] = arr; save(); render();
-    $("toast").hidden = true;
-    $("undo-t").textContent = lastDel.t.t.toUpperCase() + " BORTTAGEN";
-    $("undo").hidden = false;
-    clearTimeout(undoT); undoT = setTimeout(function () { $("undo").hidden = true; lastDel = null; }, 6000);
+    var g = takeOut(k, id); if (!g) return;
+    save(); render();
+    offerUndo(g.t.t.toUpperCase() + " BORTTAGEN", function () { insertAt(k, g.i, g.t); });
+  }
+  function clearDone(k) {
+    var gone = [];
+    list(k).forEach(function (t, i) { if (t.d) gone.push({ i: i, t: t }); });
+    allTasks()[k] = list(k).filter(function (t) { return !t.d; }); save(); render();
+    offerUndo(gone.length + (gone.length === 1 ? " KLAR RENSAD" : " KLARA RENSADE"), function () { gone.forEach(function (g) { insertAt(k, g.i, g.t); }); });
+  }
+  function moveTask(k, id, to) {
+    var g = takeOut(k, id); if (!g) return;
+    push(to, g.t); pulseId = g.t.id; save(); render();
+    var d = fromKey(to), other = key(mondayOf(d)) !== key(weekStart);
+    offerUndo("FLYTTAD TILL " + (to === key(new Date()) ? "IDAG" : DAYS[(d.getDay() + 6) % 7]) + (other ? " · V" + isoWeek(d) : ""),
+      function () { var b = takeOut(to, id); if (b) insertAt(k, g.i, b.t); });
   }
   $("undo-b").onclick = function () {
-    if (!lastDel) return;
-    var arr = list(lastDel.k); arr.splice(Math.min(lastDel.idx, arr.length), 0, lastDel.t);
-    allTasks()[lastDel.k] = arr; lastDel = null; save(); render();
+    if (!undoFn) return;
+    undoFn(); undoFn = null; save(); render();
     clearTimeout(undoT); $("undo").hidden = true;
   };
 
@@ -551,7 +565,7 @@
     var t = arr[idx], v = $("ed-title").value.trim();
     if (v) t.t = v;
     if (ed.time) t.time = ed.time; else delete t.time;
-    if (ed.done && !t.d) justDone = t.id;
+    if (ed.done && !t.d) pulseId = t.id;
     t.d = ed.done;
     if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
     save(); closeEdit(); render();
