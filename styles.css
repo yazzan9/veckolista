@@ -144,7 +144,18 @@ ul.tasks { list-style: none; margin: 0; padding: 0; }
 .task.done .chk::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--on-accent); border-width: 0 2px 2px 0; transform: rotate(40deg); }
 .txt { overflow-wrap: anywhere; font-size: 14px; }
 .txt .tm { font-size: 11px; letter-spacing: .06em; color: var(--accent); margin-right: 8px; }
-.task.done .txt { color: var(--mute); text-decoration: line-through; text-decoration-thickness: 1px; }
+.task.done .txt { color: var(--mute); transition: color .15s; }
+/* the strike is a drawn line so it can sweep across when a task completes */
+.task.done .tt { background: linear-gradient(currentColor, currentColor) no-repeat 0 58% / 100% 1px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.task.just .tt { animation: strike .22s ease-out; }
+@keyframes strike { from { background-size: 0 1px; } }
+.mcol.flash .dot { animation: pulse .18s ease-out both; }
+.mcol.flash .dot:nth-child(3) { animation-delay: .06s; }
+.mcol.flash .dot:nth-child(4) { animation-delay: .12s; }
+.mcol.flash .dot:nth-child(5) { animation-delay: .18s; }
+.mcol.flash .dot:nth-child(6) { animation-delay: .24s; }
+.mcol.flash .dot:nth-child(7) { animation-delay: .3s; }
+.day.flash .allclear, .day.flash .ac-cap { animation: slidein .3s ease-out; }
 .task.done .txt .tm { color: var(--mute); }
 .act { width: 30px; height: 30px; color: var(--mute); font-size: 16px; border-radius: 8px; }
 .act:hover { color: var(--fg); background: var(--bg); }

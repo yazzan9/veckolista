@@ -33,7 +33,9 @@
 
   var today = new Date(), todayKey = key(today);
   var state = { users: {}, session: null, theme: "system" };
-  var weekStart = mondayOf(today), openKey = todayKey, focusKey = null, pulseId = null;
+  var weekStart = mondayOf(today), openKey = todayKey, focusKey = null, pulseId = null, flashKey = null;
+  /* a short tick where the device can vibrate; silent elsewhere */
+  function buzz(p) { try { if (navigator.vibrate && !(reduceMq && reduceMq.matches)) navigator.vibrate(p); } catch (e) {} }
   var reduceMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function scrollOpenDay() { var o = document.querySelector(".day.open"); if (o) o.scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" }); }
 
@@ -330,11 +332,11 @@
         ts.slice(0, MAXDOTS).forEach(function (t) { dots += '<span class="dot' + (t.d ? " done" : "") + (t.id === pulseId ? " pulse" : "") + '"></span>'; });
         if (ts.length > MAXDOTS) dots += '<span class="more">+' + (ts.length - MAXDOTS) + "</span>";
       }
-      mh += '<button class="mcol' + (k === openKey ? " on" : "") + (k === openKey || (future && idx === 0) ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
+      mh += '<button class="mcol' + (k === openKey ? " on" : "") + (k === flashKey ? " flash" : "") + (k === openKey || (future && idx === 0) ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
 
       var open = k === openKey, dn = ts.filter(function (t) { return t.d; }).length;
       var meta = (isToday ? '<span class="now">IDAG</span> · ' : k === ydK && kind === 0 ? "IGÅR · " : "") + d.getDate() + " " + MON[d.getMonth()] + (mn && !open ? ' · <span class="miss">' + mn + " MISSADE</span>" : ts.length ? " · " + dn + "/" + ts.length : "");
-      dh += '<div class="day' + (open ? " open" : "") + '"><button class="dayhead" data-head="' + k + '" aria-expanded="' + open + '"><span class="name">' + DAYS[idx] + '</span><span class="meta">' + meta + "</span></button>";
+      dh += '<div class="day' + (open ? " open" : "") + (k === flashKey ? " flash" : "") + '"><button class="dayhead" data-head="' + k + '" aria-expanded="' + open + '"><span class="name">' + DAYS[idx] + '</span><span class="meta">' + meta + "</span></button>";
       if (open) {
         var allDone = ts.length > 0 && dn === ts.length;
         if (mn) dh += '<div class="missbar">' + mn + " MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG</div>";
@@ -342,9 +344,9 @@
         dh += '<ul class="tasks">';
         sorted(ts).forEach(function (t) {
           var ms = dayMiss && !t.d;
-          dh += '<li class="task' + (t.d ? " done" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
+          dh += '<li class="task' + (t.d ? " done" : "") + (t.d && t.id === pulseId ? " just" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
             '<button class="chk' + (t.id === pulseId ? " pulse" : "") + '" data-act="tog" aria-label="Klar: ' + esc(t.t) + '" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
-            '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + esc(t.t) + "</span>" +
+            '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + '<span class="tt">' + esc(t.t) + "</span></span>" +
             (past ? "" : '<button class="act' + (ms ? " mvm" : "") + '" data-act="mv" aria-label="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '" title="' + (ms ? "Flytta till idag" : "Flytta till nästa dag") + '">→</button>' +
             '<button class="act" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>' +
             '<button class="swdel" data-act="del" aria-label="Ta bort" tabindex="-1">×</button>') + "</li>";
@@ -379,7 +381,7 @@
     var rt = past ? '<span class="fin">AVSLUTAD</span>' : missed ? '<span class="miss">' + missed + " MISSADE</span>" : total ? "<span>" + (total - done) + " KVAR</span>" : "<span>TOM VECKA</span>";
     $("sum").innerHTML = "<span><b>" + done + " / " + total + "</b> KLARA</span>" + rt;
     if (focusKey) { var inp = $("add-" + focusKey); if (inp) inp.focus(); focusKey = null; }
-    pulseId = null;
+    pulseId = null; flashKey = null;
   }
 
   function setWeek(ws) {
@@ -442,6 +444,9 @@
     if (act === "del") { delTask(k2, id); return; }
     if (act === "tog") {
       arr[idx].d = !arr[idx].d; pulseId = arr[idx].d ? id : null;
+      var dayDone = arr[idx].d && arr.every(function (t) { return t.d; });
+      if (dayDone) flashKey = k2;
+      if (arr[idx].d) buzz(dayDone ? [8, 70, 8, 70, 8] : 8);
       save(); render();
       var nc = daysEl.querySelector('.task[data-id="' + id + '"] .chk'); if (nc) nc.focus({ preventScroll: true });
       return;
