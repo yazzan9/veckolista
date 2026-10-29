@@ -500,6 +500,7 @@
       var dayDone = arr[idx].d && arr.every(function (t) { return t.d; });
       if (dayDone) flashKey = k2;
       if (arr[idx].d) buzz(dayDone ? [8, 70, 8, 70, 8] : 8);
+      if (dayDone && k2 === key(new Date())) { var cb = btn.getBoundingClientRect(); celebrate(cb.left + cb.width / 2, cb.top + cb.height / 2, arr.length); }
       save(); render();
       var nc = daysEl.querySelector('.task[data-id="' + id + '"] .chk'); if (nc) nc.focus({ preventScroll: true });
       return;
@@ -628,7 +629,9 @@
     if (ed.done && !t.d) pulseId = t.id;
     t.d = ed.done;
     if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
+    var tk = key(new Date()), finished = pulseId === t.id && ed.day === tk && list(tk).every(function (x) { return x.d; });
     save(); closeEdit(); render();
+    if (finished) { buzz([8, 70, 8, 70, 8]); celebrate(innerWidth / 2, innerHeight / 2, list(tk).length); }
   };
   $("ed-move").onclick = function () {
     var k = ed.k, id = ed.id, to = key(addDays(fromKey(ed.k), 1));
@@ -797,7 +800,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
+    if (!$("party").hidden) endParty(); else if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
 
   /* ---------- figur: a 9x9 dot-matrix companion next to the name ----------
@@ -920,6 +923,73 @@
     fig.from = settings.figure; fig.t0 = performance.now();
     settings.figure = (settings.figure + 1) % FIGS.length; saveSettings(); buzz(6); figStart();
   };
+
+  /* ---------- allt klart: a dot-matrix takeover when today's last task is done ----------
+     a ring of dots ripples out from the tapped checkbox (orange front, fg wake, dim field behind),
+     then a big check lights up dot by dot and ALLT KLART rises in. Tap anywhere to close. */
+  var party = { raf: 0, t0: 0, ox: 0, oy: 0, end: 0 };
+  var PP = 18, CHECK = [[-5, 0], [-2, 3], [5, -4]];
+  function checkDots() {
+    var pts = [], s, i, a, b, n;
+    for (s = 0; s < CHECK.length - 1; s++) {
+      a = CHECK[s]; b = CHECK[s + 1]; n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+      for (i = s ? 1 : 0; i <= n; i++) pts.push([Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n)]);
+    }
+    return pts;
+  }
+  var CHECK_PTS = checkDots();
+  function partyDraw(t) {
+    var cv = $("party-c"), dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight, ctx = cv.getContext("2d");
+    var col = fig.col || [], cols = Math.ceil(W / PP) + 1, rows = Math.ceil(H / PP) + 1, x0 = (W % PP) / 2, y0 = (H % PP) / 2;
+    var cx = Math.round((W / 2 - x0) / PP), cy = Math.round((H * 0.42 - y0) / PP), r = t * 1.5, paths = [[], [], []], i, j, d, k;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    ctx.globalAlpha = Math.min(1, t / 260); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg"); ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+    for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
+      var px = x0 + i * PP, py = y0 + j * PP;
+      d = Math.hypot(px - party.ox, py - party.oy); k = r - d;
+      if (k < 0) continue;
+      if (k < 36) paths[2].push(px, py, 3.4);
+      else if (k < 150) paths[1].push(px, py, 3.2 - (k - 36) / 114 * 1.2);
+      else paths[0].push(px, py, 2);
+    }
+    CHECK_PTS.forEach(function (p, n) {
+      var lt = t - 650 - n * 45; if (lt < 0) return;
+      var pop = lt < 160 ? 1 + 0.7 * Math.sin(lt / 160 * Math.PI) : 1;
+      paths[2].push(x0 + (cx + p[0]) * PP, y0 + (cy + p[1]) * PP, 6 * pop);
+    });
+    for (k = 0; k < 3; k++) {
+      if (!paths[k].length) continue;
+      ctx.fillStyle = col[k] || "#888"; ctx.beginPath();
+      for (i = 0; i < paths[k].length; i += 3) { ctx.moveTo(paths[k][i] + paths[k][i + 2], paths[k][i + 1]); ctx.arc(paths[k][i], paths[k][i + 1], paths[k][i + 2], 0, 2 * Math.PI); }
+      ctx.fill();
+    }
+    $("party-t").style.top = (y0 + (cy + 5) * PP) + "px";
+    if (t > 650 + CHECK_PTS.length * 45) $("party-t").classList.add("show");
+  }
+  function partyFrame(now) {
+    var t = now - party.t0;
+    partyDraw(t);
+    if (t > 3200) { endParty(); return; }
+    party.raf = requestAnimationFrame(partyFrame);
+  }
+  function celebrate(ox, oy, n) {
+    var el = $("party"), cv = $("party-c"), dpr = window.devicePixelRatio || 1;
+    if (!fig.col) figColors();
+    cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+    party.ox = ox; party.oy = oy; party.t0 = performance.now();
+    $("party-s").textContent = "IDAG · " + n + " / " + n + " KLARA";
+    $("party-t").classList.remove("show"); el.classList.remove("out"); el.hidden = false;
+    cancelAnimationFrame(party.raf);
+    if (figReduced()) { partyDraw(10000); clearTimeout(party.end); party.end = setTimeout(endParty, 1800); return; }
+    party.raf = requestAnimationFrame(partyFrame);
+  }
+  function endParty() {
+    var el = $("party"); if (el.hidden) return;
+    cancelAnimationFrame(party.raf); clearTimeout(party.end);
+    el.classList.add("out");
+    party.end = setTimeout(function () { el.hidden = true; el.classList.remove("out"); }, 300);
+  }
+  $("party").onclick = endParty;
 
   /* ---------- keep "today" true when the app stays open past midnight ---------- */
   function tick() {

@@ -489,4 +489,14 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .stsheet .tpick { margin: 0 0 16px; }
 .sheet:has(#ed-pick:not([hidden])) .clock { display: none; }
 
+/* allt klart */
+.party { position: fixed; inset: 0; z-index: 70; cursor: pointer; transition: opacity .3s; }
+.party.out { opacity: 0; }
+.party canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.party-t { position: absolute; left: 0; right: 0; text-align: center; opacity: 0; transform: translateY(14px); transition: opacity .35s ease-out, transform .35s ease-out; pointer-events: none; }
+.party-t.show { opacity: 1; transform: none; }
+.party-t b { display: block; font-family: var(--f-display); font-weight: 800; font-size: 76px; line-height: .9; letter-spacing: .005em; color: var(--fg); }
+.party-t b.a { color: var(--accent-ink); }
+.party-t span { display: block; margin-top: 16px; font-size: 11px; letter-spacing: .16em; color: var(--mute); }
+
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }
