@@ -525,6 +525,9 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
   body.desk #s-add { grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 520px; }
   body.desk .tabbar, body.desk .tabfade { display: none; }
   body.desk #s-home .themebtn { display: none; }
+  /* on desktop the account controls sit at the far right of the page, level with the view switch */
+  body.desk.home #over-prof { position: absolute; top: 24px; right: 32px; }
+  body.desk.home #s-over .themebtn { position: absolute; top: 24px; right: 80px; }
   body.desk .undo { bottom: 28px; }
   body:has(.tabbar:not([hidden])).desk .toast { bottom: 28px; }
   /* sheets become centred dialogs on a big screen */
