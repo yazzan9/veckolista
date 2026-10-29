@@ -1,12 +1,12 @@
 # Veckolista
 
-A week-based todo app with a dot-matrix look inspired by Nothing. Plan one week at a time (ISO week numbers, e.g. VECKA 44), open a day, add tasks, and optionally give a task a time, which acts as a reminder.
+A week-based todo app with a dot-matrix look inspired by Nothing. Plan one ISO week at a time, add tasks per day, give a task a time as a reminder, and get a small celebration when the day is done.
 
-UI language: Swedish.
+Built with plain HTML, CSS and JavaScript. No build step, no dependencies, no backend.
 
 ## Run it
 
-No build step. Open `index.html` in a browser, or serve the folder:
+Open `index.html` in a browser, or serve the folder:
 
 ```
 npx serve .
@@ -14,32 +14,29 @@ npx serve .
 
 ## Features
 
-- Week view with a dot overview of all seven days
-- Calendar opened from the week number, with ISO week numbers
-- Tasks per day: add, tick off, move to next day, delete
-- Clock icon in the add row for a time (reminder marker with a bell)
-- Empty state for new users, "Allt klart" state when a day is done
-- Welcome, login and sign-up screens
-- Light and dark theme
+- Start by typing your name, no login
+- Overview with a quote of the day, today, coming days and a week meter
+- Plan view with weeks, missed tasks, read-only past weeks and swipe to delete with undo
+- Time picker for reminders (tap the hour or minute for a grid)
+- Dot-matrix animations: a dancing figure, a cheer for each finished task and a victory dance when the day is done
+- Weekly recap of last week
+- Light and dark theme, seven accent colours
+- English (default) and Swedish
+- Phone layout and a two-column desktop layout
 
-## Prototype status
+## Data
 
-Login is a local prototype. Accounts and tasks are stored in the browser (`localStorage`) and do not sync between devices. Password hashing is SHA-256 in the browser and is for demo purposes only.
-
-Demo account: `yazan@epost.se` / `veckolista1`
-
-Reminders are only shown (bell icon), not delivered as notifications.
+Everything is stored in the browser (`localStorage`) on the device you use. Nothing is sent anywhere and nothing syncs between devices. Lists are keyed by the name typed on the start screen and have no password.
 
 ## Roadmap
 
-- Real auth and sync (Supabase or Firebase)
+- Real accounts and sync
 - Real notifications for tasks with a time
-- Split `index.html` into `styles.css` and `app.js`
 - Installable PWA
 
 ## Design
 
-Fonts: Doto, Barlow Condensed, DM Mono (Google Fonts). Accent `#FF4A1C`, warm grey background.
+Fonts: Doto, Barlow Condensed, DM Mono (Google Fonts). Warm grey surfaces with one accent colour. Design references are in `design/screens/`.
 
 ## License
 
