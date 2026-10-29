@@ -101,14 +101,14 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", salvia: "SALVIA", kobolt: "KOBOLT", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0 };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk" };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
       if (s) { for (var k in settings) if (k in s) settings[k] = s[k]; }
+      else if (state.theme) settings.theme = state.theme;
       if (!(settings.figure >= 0 && settings.figure < 5)) settings.figure = 0;
       if (!ACC[settings.accent]) settings.accent = settings.accent === "blue" ? "kobolt" : "orange";
-      else if (state.theme) settings.theme = state.theme;
     } catch (e) {}
   }
   function saveSettings() { try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch (e) {} }
@@ -133,8 +133,26 @@
     var t = $("toast"); t.textContent = msg; t.hidden = false;
     clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 2400);
   }
+  /* ---------- phone or desktop view: on wide screens the two tabs sit side by side ---------- */
+  var wideMq = window.matchMedia ? window.matchMedia("(min-width: 900px)") : null;
+  function isDesk() { return settings.view !== "phone" && !!wideMq && wideMq.matches; }
+  function applyView() {
+    var home = document.body.classList.contains("home");
+    document.body.classList.toggle("desk", isDesk());
+    $("viewsw").hidden = !(home && wideMq && wideMq.matches);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-view]"), function (b) {
+      var on = b.getAttribute("data-view") === (settings.view === "phone" ? "phone" : "desk");
+      b.classList.toggle("on", on); b.setAttribute("aria-checked", on);
+    });
+    if (home && $("s-add").hidden) setTab(tab);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-view]"), function (b) {
+    b.onclick = function () { settings.view = b.getAttribute("data-view"); saveSettings(); applyView(); };
+  });
+  if (wideMq && wideMq.addEventListener) wideMq.addEventListener("change", applyView);
   function show(name) {
     ["welcome", "login", "signup"].forEach(function (s) { $("s-" + s).hidden = s !== name; });
+    document.body.classList.toggle("home", name === "home"); applyView();
     if (name !== "home") { $("s-over").hidden = true; $("s-home").hidden = true; $("s-add").hidden = true; document.body.classList.remove("adding"); setTabsVisible(false); }
     window.scrollTo(0, 0);
     if (name === "welcome") renderWelcome();
@@ -149,8 +167,9 @@
     var changed = name !== tab || $("tabbar").hidden || !$("s-add").hidden;
     tab = name;
     $("s-add").hidden = true; document.body.classList.remove("adding");
-    var over = name === "over", scr = $(over ? "s-over" : "s-home");
-    $("s-over").hidden = !over; $("s-home").hidden = over;
+    var over = name === "over", scr = $(over ? "s-over" : "s-home"), desk = isDesk();
+    $("s-over").hidden = !over && !desk; $("s-home").hidden = over && !desk;
+    if (desk) { renderOver(); render(); return; }
     setTabsVisible(true);
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
       var on = b.getAttribute("data-tab") === name;
@@ -430,6 +449,7 @@
     $("sum").innerHTML = "<span><b>" + done + " / " + total + "</b> KLARA</span>" + rt;
     if (focusKey) { var inp = $("add-" + focusKey); if (inp) inp.focus(); focusKey = null; }
     pulseId = null; flashKey = null;
+    if (isDesk() && !$("s-over").hidden) renderOver();
   }
 
   function setWeek(ws) {
