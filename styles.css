@@ -500,6 +500,19 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .tp-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .tp-acts .btn { min-height: 46px; }
 .st-def { padding: 0 14px; }
+/* inline picker on a new task: always visible, starts empty */
+.tpick.inline { padding: 12px 14px 12px; }
+.ad-card .tpick.inline { margin-top: 0; }
+.tr-head { display: flex; align-items: center; justify-content: space-between; min-height: 28px; margin-bottom: 6px; }
+.tr-head .sl { margin: 0; }
+.tr-clear { font-size: 10px; letter-spacing: .12em; color: var(--mute); text-decoration: underline; text-underline-offset: 3px; position: relative; }
+.tr-clear::before { content: ""; position: absolute; inset: -12px -6px; }
+.tr-clear:hover { color: var(--fg); }
+.tr-clear[hidden] { display: none; }
+.tpick.inline .tp-n, .tpick.inline .tp-c { font-size: 48px; }
+.tpick.inline .rnd { width: 40px; height: 40px; }
+.tpick.inline.empty .tp-n, .tpick.inline.empty .tp-c { color: var(--dot-off); }
+.tp-cap { margin-top: 10px; text-align: center; }
 .stsheet .tpick { margin: 0 0 16px; }
 .sheet:has(#ed-pick:not([hidden])) .clock { display: none; }
 
