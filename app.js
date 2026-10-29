@@ -129,7 +129,7 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", korall: "KORALL", mint: "MINT", lime: "LIME", bla: "BLÅ", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en" };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
@@ -158,7 +158,7 @@
     "ALLT SPARAS BARA PÅ DEN HÄR ENHETEN": "SAVED ON THIS DEVICE ONLY", "SKRIV DITT NAMN FÖRST": "TYPE YOUR NAME FIRST",
     "Ditt namn": "Your name", "Kom igång": "Get started", "Tillbaka": "Back", "Figur som rör sig. Tryck för nästa": "Moving figure. Tap for the next one",
     "GOD NATT": "GOOD NIGHT", "GOD MORGON": "GOOD MORNING", "GOD DAG": "GOOD AFTERNOON", "GOD KVÄLL": "GOOD EVENING",
-    "DAGENS CITAT": "QUOTE OF THE DAY", "NYTT VARJE DAG": "NEW EVERY DAY", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
+    "DAGENS CITAT": "QUOTE OF THE DAY", "Föregående citat": "Previous quote", "Nästa citat": "Next quote", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
     "MED PÅMINNELSE": "WITH REMINDER", "PÅMINNELSER AV": "REMINDERS OFF", "INGET MER": "NOTHING MORE", "INGET PLANERAT": "NOTHING PLANNED",
     "NJUT AV DAGEN": "ENJOY THE DAY", "INGET ÄNNU": "NOTHING YET", "ÄNNU INGEN TID": "NO TIME YET", "TID = PÅMINNELSE": "TIME = REMINDER",
     "INGEN SERIE ÄNNU": "NO STREAK YET", "DIN FÖRSTA VECKA BÖRJAR HÄR": "YOUR FIRST WEEK STARTS HERE", "NÄSTA VECKA": "NEXT WEEK", "PLANERA I FÖRTID": "PLAN AHEAD",
@@ -182,10 +182,6 @@
     "Tema": "Theme", "Färg": "Colour", "Rosa": "Pink", "Korall": "Coral", "Blå": "Blue", "Påminnelser": "Reminders", "Påminnelse": "Reminder", "Standardtid": "Default time",
     "Flytta till idag": "Move to today", "Ta bort": "Delete", "Tid, påminnelse och upprepning": "Time and reminder", "Språk": "Language",
     "person": "person", "hund": "dog", "robot": "robot", "katt": "cat", "fågel": "bird", "ljus": "light", "mörk": "dark",
-    "Det räcker att börja. Resten kommer.": "Just start. The rest will follow.", "En liten uppgift i taget.": "One small task at a time.",
-    "Gör det enkla först.": "Do the easy thing first.", "Lugn och framåt.": "Calm and forward.", "Idag är en bra dag att börja.": "Today is a good day to start.",
-    "Små steg räknas också.": "Small steps count too.", "Planera lite, gör lite mer.": "Plan a little, do a little more.",
-    "Det viktiga får plats i dag.": "What matters fits in today.", "Färdigt är bättre än perfekt.": "Done is better than perfect.", "Ta en sak åt gången.": "One thing at a time."
   };
   var EN_PAT = [
     [/^(\d+) MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG$/, "$1 MISSED · TAP → TO MOVE TO TODAY"],
@@ -334,19 +330,46 @@
   }
 
   /* ---------- översikt ---------- */
+  /* dagens citat: four quotes, opens on the first each day; the one picked stays for the rest of the day */
   var QUOTES = [
-    "Det räcker att börja. Resten kommer.",
-    "En liten uppgift i taget.",
-    "Gör det enkla först.",
-    "Lugn och framåt.",
-    "Idag är en bra dag att börja.",
-    "Små steg räknas också.",
-    "Planera lite, gör lite mer.",
-    "Det viktiga får plats i dag.",
-    "Färdigt är bättre än perfekt.",
-    "Ta en sak åt gången."
+    { en: "A JOURNEY OF A THOUSAND MILES BEGINS WITH A SINGLE STEP.", sv: "EN RESA PÅ TUSEN MIL BÖRJAR MED ETT STEG.", by: "LAO TZU" },
+    { en: "LESS, BUT BETTER.", sv: "MINDRE, MEN BÄTTRE.", by: "DIETER RAMS" },
+    { en: "LOST TIME IS NEVER FOUND AGAIN.", sv: "FÖRLORAD TID HITTAR MAN ALDRIG IGEN.", by: "BENJAMIN FRANKLIN" },
+    { en: "PLANS ARE WORTHLESS, BUT PLANNING IS EVERYTHING.", sv: "PLANER ÄR VÄRDELÖSA, MEN ATT PLANERA ÄR ALLT.", by: "DWIGHT D. EISENHOWER" }
   ];
-  function dayOfYear(d) { return Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(d.getFullYear(), 0, 0)) / 864e5); }
+  function quoteIdx() { var q = settings.quote; return q && q.day === key(new Date()) && QUOTES[q.i] ? q.i : 0; }
+  /* the opening mark hangs into the margin and the closing mark is tied to the last word, so neither adds a line */
+  function quoteHtml(q) {
+    var txt = isEn() ? q.en : q.sv, cut = txt.lastIndexOf(" ") + 1;
+    return '<span class="qm qo">' + (isEn() ? "“" : "”") + "</span>" + esc(txt.slice(0, cut)) +
+      '<span class="nw">' + esc(txt.slice(cut)) + '<span class="qm">”</span></span>';
+  }
+  function renderQuote(dir) {
+    var el = $("o-quote"), i = quoteIdx(), h = 0;
+    if (!el.offsetWidth) return;
+    el.style.minHeight = "";
+    QUOTES.forEach(function (q) { el.innerHTML = quoteHtml(q); h = Math.max(h, el.offsetHeight); });
+    el.style.minHeight = h + "px";
+    el.innerHTML = quoteHtml(QUOTES[i]); $("o-quote-d").textContent = QUOTES[i].by;
+    if (dir) { el.classList.remove("qin-l", "qin-r"); void el.offsetWidth; el.classList.add(dir > 0 ? "qin-r" : "qin-l"); }
+  }
+  function stepQuote(d) {
+    settings.quote = { day: key(new Date()), i: (quoteIdx() + d + QUOTES.length) % QUOTES.length }; saveSettings();
+    renderQuote(d); buzz(6);
+  }
+  $("o-qprev").onclick = function () { stepQuote(-1); };
+  $("o-qnext").onclick = function () { stepQuote(1); };
+  (function () {
+    var q0 = null, tile = $("o-qtile");
+    tile.addEventListener("pointerdown", function (e) { q0 = e.target.closest("button") ? null : { x: e.clientX, y: e.clientY }; });
+    tile.addEventListener("pointerup", function (e) {
+      if (!q0) return; var dx = e.clientX - q0.x, dy = e.clientY - q0.y; q0 = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) stepQuote(dx < 0 ? 1 : -1);
+    });
+    tile.addEventListener("pointercancel", function () { q0 = null; });
+  })();
+  window.addEventListener("resize", function () { if (!$("s-over").hidden) renderQuote(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (!$("s-over").hidden) renderQuote(); });
   function plural(n) { return n + (n === 1 ? " UPPGIFT" : " UPPGIFTER"); }
   function dotsHtml(ts, cls) {
     var h = "";
@@ -369,8 +392,7 @@
     fitName(); figStart();
     var dl = DAYS[idx] + " · " + now.getDate() + " " + MON[now.getMonth()];
     $("o-date").textContent = dl + " · VECKA " + isoWeek(now);
-    $("o-quote").textContent = QUOTES[dayOfYear(now) % QUOTES.length];
-    $("o-quote-d").textContent = now.getDate() + " " + MON[now.getMonth()] + " · NYTT VARJE DAG";
+    renderQuote();
 
     var ts = list(nk), dn = ts.filter(function (t) { return t.d; }).length, n = ts.length, left = n - dn;
     var box = $("o-idag"), st = !n ? "empty" : left ? "tasks" : "done";

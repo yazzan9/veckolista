@@ -299,12 +299,24 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .t-row { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
 .t-l { font-size: 10px; letter-spacing: .18em; color: var(--mute); }
 .tlink { padding: 8px 0; }
-.quote { background: var(--fg); color: var(--bg); padding: 20px 22px 15px; min-height: 153px; }
+.quote { background: var(--fg); color: var(--bg); padding: 20px 22px 14px; display: flex; flex-direction: column; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .quote .t-row { min-height: 14px; }
 .quote .t-l { color: var(--bg); opacity: .75; }
 .qdot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
-.q-t { font-family: var(--f-display); font-weight: 800; font-size: 32px; line-height: 1; text-transform: uppercase; margin: 14px 0 14px; }
-.q-f { font-size: 10px; letter-spacing: .14em; opacity: .75; line-height: 12px; }
+.q-t { font-family: var(--f-display); font-weight: 800; font-size: 32px; line-height: 1; text-transform: uppercase; margin: 14px 0 12px; text-indent: -.36em; }
+/* quote marks: accent, same Barlow; the opening one hangs into the padding so it never costs text width */
+.qm { color: var(--accent); }
+.qo { display: inline-block; width: .36em; }
+.nw { white-space: nowrap; }
+.q-t.qin-r { animation: qin-r .22s ease-out; }
+.q-t.qin-l { animation: qin-l .22s ease-out; }
+@keyframes qin-r { from { opacity: 0; transform: translateX(18px); } }
+@keyframes qin-l { from { opacity: 0; transform: translateX(-18px); } }
+.q-b { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.q-nav { display: flex; gap: 8px; flex: none; }
+.q-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--mute); color: var(--bg); font-size: 16px; display: grid; place-items: center; }
+.q-btn:hover { border-color: var(--bg); }
+.q-f { font-size: 11px; letter-spacing: .14em; opacity: .75; line-height: 14px; text-transform: uppercase; }
 
 .idag { height: 152px; padding: 18px 20px 0; }
 .idag .t-row { min-height: 0; height: 16px; }

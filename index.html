@@ -93,10 +93,13 @@
     <div class="g-d" id="o-date"></div>
   </div>
 
-  <section class="tile quote" aria-label="Dagens citat">
+  <section class="tile quote" id="o-qtile" aria-label="Dagens citat">
     <div class="t-row"><span class="t-l">DAGENS CITAT</span><i class="qdot" aria-hidden="true"></i></div>
-    <p class="q-t" id="o-quote"></p>
-    <div class="q-f" id="o-quote-d"></div>
+    <p class="q-t" id="o-quote" data-notr aria-live="polite"></p>
+    <div class="q-b">
+      <span class="q-f" id="o-quote-d" data-notr></span>
+      <span class="q-nav"><button type="button" class="q-btn" id="o-qprev" aria-label="Föregående citat">←</button><button type="button" class="q-btn" id="o-qnext" aria-label="Nästa citat">→</button></span>
+    </div>
   </section>
 
   <section class="tile idag" id="o-idag" aria-label="Idag">
