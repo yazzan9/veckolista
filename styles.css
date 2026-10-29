@@ -303,10 +303,10 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .quote .t-row { min-height: 14px; }
 .quote .t-l { color: var(--bg); opacity: .75; }
 .qdot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
-.q-t { font-family: var(--f-display); font-weight: 800; font-size: 32px; line-height: 1; text-transform: uppercase; margin: 14px 0 12px; text-indent: -.36em; }
-/* quote marks: accent, same Barlow; the opening one hangs into the padding so it never costs text width */
+.q-t { font-family: var(--f-display); font-weight: 800; font-size: 32px; line-height: 1; text-transform: uppercase; margin: 14px 0 12px; }
+/* quote marks: accent, same Barlow, sitting inside the text edge */
 .qm { color: var(--accent); }
-.qo { display: inline-block; width: .36em; }
+.qo { margin-right: .04em; }
 .nw { white-space: nowrap; }
 .q-t.qin-r { animation: qin-r .22s ease-out; }
 .q-t.qin-l { animation: qin-l .22s ease-out; }

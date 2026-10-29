@@ -338,7 +338,7 @@
     { en: "PLANS ARE WORTHLESS, BUT PLANNING IS EVERYTHING.", sv: "PLANER ÄR VÄRDELÖSA, MEN ATT PLANERA ÄR ALLT.", by: "DWIGHT D. EISENHOWER" }
   ];
   function quoteIdx() { var q = settings.quote; return q && q.day === key(new Date()) && QUOTES[q.i] ? q.i : 0; }
-  /* the opening mark hangs into the margin and the closing mark is tied to the last word, so neither adds a line */
+  /* the closing mark is tied to the last word so it never ends up alone on a line */
   function quoteHtml(q) {
     var txt = isEn() ? q.en : q.sv, cut = txt.lastIndexOf(" ") + 1;
     return '<span class="qm qo">' + (isEn() ? "“" : "”") + "</span>" + esc(txt.slice(0, cut)) +
