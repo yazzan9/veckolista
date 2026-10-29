@@ -87,7 +87,7 @@
   </div>
   <div class="greet">
     <div class="g-row">
-      <h1 class="g-n"><span id="o-name">DU</span><i aria-hidden="true">.</i></h1>
+      <h1 class="g-n"><span id="o-name" data-notr>DU</span><i aria-hidden="true">.</i></h1>
       <button class="fig" id="o-fig" aria-label="Figur. Tryck för nästa"><canvas id="o-fig-c" width="120" height="120" aria-hidden="true"></canvas></button>
     </div>
     <div class="g-d" id="o-date"></div>
@@ -200,8 +200,8 @@
       <button class="pill" id="st-done">KLAR</button>
     </div>
     <div class="acct">
-      <div class="avatar big" id="st-av" aria-hidden="true">A</div>
-      <div class="acct-t"><span class="t-l">KONTO</span><div class="nm"><span id="st-name"></span><i aria-hidden="true">.</i></div></div>
+      <div class="avatar big" id="st-av" data-notr aria-hidden="true">A</div>
+      <div class="acct-t"><span class="t-l">KONTO</span><div class="nm"><span id="st-name" data-notr></span><i aria-hidden="true">.</i></div></div>
     </div>
     <div class="st-h">UTSEENDE</div>
     <div class="st-card">
@@ -215,6 +215,12 @@
         <div><span class="st-k">FÄRG</span><span class="st-s" id="st-acc-n">ORANGE</span></div>
         <div class="sw" role="radiogroup" aria-label="Färg">
           <button role="radio" data-acc="orange" aria-label="Orange"><i></i></button><button role="radio" data-acc="rosa" aria-label="Rosa"><i></i></button><button role="radio" data-acc="salvia" aria-label="Salvia"><i></i></button><button role="radio" data-acc="kobolt" aria-label="Kobolt"><i></i></button><button role="radio" data-acc="mono" aria-label="Mono"><i></i></button>
+        </div>
+      </div>
+      <div class="st-row">
+        <span class="st-k">SPRÅK</span>
+        <div class="seg" role="radiogroup" aria-label="Språk">
+          <button role="radio" data-set-lang="en" lang="en">ENGLISH</button><button role="radio" data-set-lang="sv" lang="sv">SVENSKA</button>
         </div>
       </div>
     </div>

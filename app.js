@@ -129,17 +129,140 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", salvia: "SALVIA", kobolt: "KOBOLT", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk" };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en" };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
       if (s) { for (var k in settings) if (k in s) settings[k] = s[k]; }
       else if (state.theme) settings.theme = state.theme;
       if (!(settings.figure >= 0 && settings.figure < 5)) settings.figure = 0;
+      if (settings.lang !== "sv") settings.lang = "en";
       if (!ACC[settings.accent]) settings.accent = settings.accent === "blue" ? "kobolt" : "orange";
     } catch (e) {}
   }
   function saveSettings() { try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch (e) {} }
+  /* ---------- language: English by default, Swedish in Inställningar ----------
+     the app is written in Swedish; for English, day and month names swap at the source and every other
+     UI string is translated as it reaches the DOM (exact phrases, then patterns for built-up text).
+     Anything inside [data-notr] (task titles, names) is the user's own text and is never touched. */
+  var SV_ARR = { DAYS: DAYS, LET: LET, MON: MON, MONTHS: MONTHS };
+  var EN_ARR = {
+    DAYS: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"],
+    LET: ["M", "T", "W", "T", "F", "S", "S"],
+    MON: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+    MONTHS: ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
+  };
+  var EN = {
+    "AUTO": "AUTO", "KLARA": "DONE", "VECKA": "WEEK", "VECKAN": "THIS WEEK", "IDAG": "TODAY", "IGÅR": "YESTERDAY", "NÄSTA": "NEXT", "PLAN": "PLAN", "ÖVERSIKT": "OVERVIEW",
+    "Planera veckan. En dag i taget.": "Plan the week. One day at a time.", "VAD HETER DU?": "WHAT'S YOUR NAME?",
+    "ALLT SPARAS BARA PÅ DEN HÄR ENHETEN": "SAVED ON THIS DEVICE ONLY", "SKRIV DITT NAMN FÖRST": "TYPE YOUR NAME FIRST",
+    "Ditt namn": "Your name", "Kom igång": "Get started", "Tillbaka": "Back", "Figur som rör sig. Tryck för nästa": "Moving figure. Tap for the next one",
+    "GOD NATT": "GOOD NIGHT", "GOD MORGON": "GOOD MORNING", "GOD DAG": "GOOD AFTERNOON", "GOD KVÄLL": "GOOD EVENING",
+    "DAGENS CITAT": "QUOTE OF THE DAY", "NYTT VARJE DAG": "NEW EVERY DAY", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
+    "MED PÅMINNELSE": "WITH REMINDER", "PÅMINNELSER AV": "REMINDERS OFF", "INGET MER": "NOTHING MORE", "INGET PLANERAT": "NOTHING PLANNED",
+    "NJUT AV DAGEN": "ENJOY THE DAY", "INGET ÄNNU": "NOTHING YET", "ÄNNU INGEN TID": "NO TIME YET", "TID = PÅMINNELSE": "TIME = REMINDER",
+    "INGEN SERIE ÄNNU": "NO STREAK YET", "DIN FÖRSTA VECKA BÖRJAR HÄR": "YOUR FIRST WEEK STARTS HERE", "NÄSTA VECKA": "NEXT WEEK", "PLANERA I FÖRTID": "PLAN AHEAD",
+    "INGET PLANERAT ÄNNU": "NOTHING PLANNED YET", "KOM IGÅNG MED ETT FÖRSLAG": "START WITH A SUGGESTION", "+ Handla mat": "+ Buy groceries", "+ Träning": "+ Workout",
+    "+ Läs 10 sidor": "+ Read 10 pages", "Handla mat": "Buy groceries", "Träning": "Workout", "Läs 10 sidor": "Read 10 pages",
+    "Lägg till en uppgift...": "Add a task...", "Första uppgiften...": "Your first task...", "↑ BÖRJA HÄR. KLOCKAN = PÅMINNELSE": "↑ START HERE. CLOCK = REMINDER",
+    "RENSA KLARA": "CLEAR DONE", "SKRIVSKYDDAD": "READ ONLY", "VECKAN ÄR AVSLUTAD": "THE WEEK IS OVER", "AVSLUTAD": "FINISHED", "TOM VECKA": "EMPTY WEEK",
+    "NY UPPGIFT": "NEW TASK", "LÄGG TILL": "ADD", "TILLAGD": "ADDED", "INGA UPPGIFTER ÄNNU": "NO TASKS YET", "Vad ska göras?": "What needs doing?", "Ny uppgift": "New task", "Välj dag": "Pick a day",
+    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
+    "Välj tid": "Pick a time", "Tid": "Time", "En timme senare": "One hour later", "En timme tidigare": "One hour earlier", "Fem minuter senare": "Five minutes later", "Fem minuter tidigare": "Five minutes earlier",
+    "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MARKERA SOM KLAR": "MARK AS DONE",
+    "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",
+    "FLYTTAR UPPGIFTEN TILL I MORGON. DEN FÖRSVINNER FRÅN IDAG.": "MOVES THE TASK TO TOMORROW. IT DISAPPEARS FROM TODAY.",
+    "INSTÄLLNINGAR": "SETTINGS", "KONTO": "ACCOUNT", "UTSEENDE": "APPEARANCE", "TEMA": "THEME", "LJUS": "LIGHT", "MÖRK": "DARK", "FÄRG": "COLOUR",
+    "ROSA": "PINK", "SALVIA": "SAGE", "KOBOLT": "COBALT", "PÅMINNELSER": "REMINDERS", "NÄR EN UPPGIFT HAR TID": "WHEN A TASK HAS A TIME", "STANDARDTID": "DEFAULT TIME",
+    "LOGGA UT": "LOG OUT", "SPRÅK": "LANGUAGE", "VECKOLISTA · VERSION 1.0": "VECKOLISTA · VERSION 1.0", "DU ÄR UTLOGGAD": "YOU ARE LOGGED OUT",
+    "Visning": "View", "Mobilvy": "Phone view", "Datorvy": "Desktop view", "Byt tema": "Change theme", "Inställningar": "Settings", "Huvudmeny": "Main menu",
+    "Dagens citat": "Quote of the day", "Idag": "Today", "Öppna idag i Plan": "Open today in Plan", "Lägg till uppgift": "Add task", "Lägg till": "Add", "Vecka": "Week",
+    "Öppna kalender": "Open calendar", "Nästa": "Next", "Öppna nästa uppgift i Plan": "Open the next task in Plan", "Veckan": "This week", "Förra veckan": "Previous week",
+    "Nästa vecka": "Next week", "Kalender": "Calendar", "Stäng kalendern": "Close calendar", "Förra månaden": "Previous month", "Nästa månad": "Next month", "Stäng": "Close",
+    "Tema": "Theme", "Färg": "Colour", "Rosa": "Pink", "Salvia": "Sage", "Kobolt": "Cobalt", "Påminnelser": "Reminders", "Påminnelse": "Reminder", "Standardtid": "Default time",
+    "Flytta till idag": "Move to today", "Ta bort": "Delete", "Tid, påminnelse och upprepning": "Time and reminder", "Språk": "Language",
+    "person": "person", "hund": "dog", "robot": "robot", "katt": "cat", "fågel": "bird", "ljus": "light", "mörk": "dark",
+    "Det räcker att börja. Resten kommer.": "Just start. The rest will follow.", "En liten uppgift i taget.": "One small task at a time.",
+    "Gör det enkla först.": "Do the easy thing first.", "Lugn och framåt.": "Calm and forward.", "Idag är en bra dag att börja.": "Today is a good day to start.",
+    "Små steg räknas också.": "Small steps count too.", "Planera lite, gör lite mer.": "Plan a little, do a little more.",
+    "Det viktiga får plats i dag.": "What matters fits in today.", "Färdigt är bättre än perfekt.": "Done is better than perfect.", "Ta en sak åt gången.": "One thing at a time."
+  };
+  var EN_PAT = [
+    [/^(\d+) MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG$/, "$1 MISSED · TAP → TO MOVE TO TODAY"],
+    [/^FLYTTAR UPPGIFTEN TILL (.+)\. DEN FÖRSVINNER FRÅN (.+)\.$/, function (m, a, b) { return "MOVES THE TASK TO " + tr(a) + ". IT DISAPPEARS FROM " + tr(b) + "."; }],
+    [/^(\d+) UPPGIFT$/, "$1 TASK"], [/^(\d+) UPPGIFTER$/, "$1 TASKS"], [/^(\d+) MISSADE$/, "$1 MISSED"], [/^(\d+) KVAR$/, "$1 LEFT"],
+    [/^\/ (\d+) KLARA$/, "/ $1 DONE"], [/^(\d+) \/ (\d+) KLARA$/, "$1 / $2 DONE"], [/^(\d+) KLARA RENSADE$/, "$1 DONE CLEARED"], [/^(\d+) KLAR RENSAD$/, "$1 DONE CLEARED"],
+    [/^SERIE: (\d+) DAG$/, "STREAK: $1 DAY"], [/^SERIE: (\d+) DAGAR$/, "STREAK: $1 DAYS"], [/^OM (\d+) VECKOR$/, "IN $1 WEEKS"], [/^VECKA (\d+)$/, "WEEK $1"],
+    [/^VALD: VECKA (\d+)$/, "SELECTED: WEEK $1"], [/^Vecka (\d+)$/, "Week $1"], [/^HEJ (.+)$/, "HI $1"], [/^NÄSTA: (.+)$/, function (m, a) { return "NEXT: " + tr(a); }],
+    [/^FLYTTAD TILL (.+)$/, function (m, a) { return "MOVED TO " + tr(a); }], [/^PÅMINNER DIG (.+)$/, function (m, a) { return "REMINDS YOU " + tr(a); }],
+    [/^PÅMINNELSE (.+)$/, "REMINDER $1"], [/^(.+) BORTTAGEN$/, "$1 DELETED"], [/^Klar: (.*)$/, "Done: $1"],
+    [/^Figur: (.+)\. Tryck för nästa figur$/, function (m, a) { return "Figure: " + tr(a) + ". Tap for the next one"; }],
+    [/^Tema: (.+)\. Tryck för att byta$/, function (m, a) { return "Theme: " + tr(a) + ". Tap to switch"; }],
+    [/^(\d+) (JAN|FEB|MAR|APR|MAJ|JUN|JUL|AUG|SEP|OKT|NOV|DEC)$/, function (m, d, mo) { return d + " " + EN_ARR.MON[SV_ARR.MON.indexOf(mo)]; }]
+  ];
+  function trOne(s) {
+    if (Object.prototype.hasOwnProperty.call(EN, s)) return EN[s];
+    var i = SV_ARR.DAYS.indexOf(s); if (i >= 0) return EN_ARR.DAYS[i];
+    i = SV_ARR.MONTHS.indexOf(s); if (i >= 0) return EN_ARR.MONTHS[i];
+    for (var p = 0; p < EN_PAT.length; p++) if (EN_PAT[p][0].test(s)) return s.replace(EN_PAT[p][0], EN_PAT[p][1]);
+    return null;
+  }
+  /* whole string first, then each " · " segment, keeping the spacing around it */
+  function tr(s) {
+    var core = s.trim(); if (!core) return s;
+    var w = trOne(core);
+    if (w === null && core.indexOf(" · ") >= 0) w = core.split(" · ").map(function (seg) { var x = trOne(seg.trim()); return x === null ? seg : x; }).join(" · ");
+    if (w === null || w === core) return s;
+    var lead = s.slice(0, s.indexOf(core)), tail = s.slice(s.indexOf(core) + core.length);
+    return lead + w + tail;
+  }
+  function isEn() { return settings.lang !== "sv"; }
+  function t(s) { return isEn() ? tr(s) : s; }
+  var TR_ATTRS = ["aria-label", "placeholder", "title"];
+  function trSkip(el) { return !el || (el.closest && el.closest("[data-notr], script, style")); }
+  function trText(n) {
+    if (!isEn() || n.__en === n.nodeValue || trSkip(n.parentElement)) return;
+    var v = tr(n.nodeValue); if (v === n.nodeValue) return;
+    n.__sv = n.nodeValue; n.__en = v; n.nodeValue = v;
+  }
+  function trAttrs(el) {
+    if (!isEn() || trSkip(el)) return;
+    TR_ATTRS.forEach(function (a) {
+      var cur = el.getAttribute(a); if (cur === null) return;
+      el.__en = el.__en || {}; el.__sv = el.__sv || {};
+      if (el.__en[a] === cur) return;
+      var v = tr(cur); if (v === cur) return;
+      el.__sv[a] = cur; el.__en[a] = v; el.setAttribute(a, v);
+    });
+  }
+  function trTree(root) {
+    if (root.nodeType === 3) { trText(root); return; }
+    if (root.nodeType !== 1 || trSkip(root)) return;
+    trAttrs(root);
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT), n;
+    while ((n = w.nextNode())) { if (n.nodeType === 3) trText(n); else trAttrs(n); }
+  }
+  function untrTree() {
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT), n;
+    while ((n = w.nextNode())) {
+      if (n.nodeType === 3) { if (n.__sv !== undefined && n.__en === n.nodeValue) n.nodeValue = n.__sv; n.__sv = n.__en = undefined; }
+      else if (n.__sv) { for (var a in n.__sv) if (n.getAttribute(a) === n.__en[a]) n.setAttribute(a, n.__sv[a]); n.__sv = n.__en = undefined; }
+    }
+  }
+  if (window.MutationObserver) new MutationObserver(function (ms) {
+    if (!isEn()) return;
+    ms.forEach(function (m) {
+      if (m.type === "characterData") trText(m.target);
+      else if (m.type === "attributes") trAttrs(m.target);
+      else Array.prototype.forEach.call(m.addedNodes, trTree);
+    });
+  }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+  function applyLang() {
+    var A = isEn() ? EN_ARR : SV_ARR;
+    DAYS = A.DAYS; LET = A.LET; MON = A.MON; MONTHS = A.MONTHS;
+    document.documentElement.lang = isEn() ? "en" : "sv";
+    if (isEn()) trTree(document.body); else untrTree();
+  }
   var darkMq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
   function isDark() { return settings.theme === "dark" || (settings.theme === "system" && !!darkMq && darkMq.matches); }
   function applyTheme() {
@@ -273,7 +396,7 @@
       for (i = 1; i < 7 && !nd; i++) { var dk = addDays(now, i), rem = list(key(dk)).filter(function (t) { return !t.d; }).length; if (rem) nd = { d: dk, n: rem }; }
       a = "INGET MER"; b = nd ? "NÄSTA: " + DAYS[(nd.d.getDay() + 6) % 7] : "NÄSTA: INGET PLANERAT"; c = nd ? plural(nd.n) : "NJUT AV DAGEN";
     } else { a = "INGET ÄNNU"; b = "ÄNNU INGEN TID"; c = "TID = PÅMINNELSE"; }
-    $("o-n1").textContent = a; $("o-n2").textContent = b; $("o-n3").textContent = c;
+    $("o-n1").toggleAttribute("data-notr", !!nx); $("o-n1").textContent = a; $("o-n2").textContent = b; $("o-n3").textContent = c;
 
     var tot = 0, tdn = 0, mh = "", streak = 0, dates = [];
     for (i = 0; i < 7; i++) {
@@ -534,7 +657,7 @@
           var ms = dayMiss && !t.d;
           dh += '<li class="task' + (t.d ? " done" : "") + (t.d && t.id === pulseId ? " just" : "") + (ms ? " missed" : "") + '" data-id="' + t.id + '" data-k="' + k + '">' +
             '<button class="chk' + (t.id === pulseId ? " pulse" : "") + '" data-act="tog" aria-label="Klar: ' + esc(t.t) + '" aria-pressed="' + t.d + '"' + (past ? " disabled" : "") + "></button>" +
-            '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + '<span class="tt">' + esc(t.t) + "</span></span>" +
+            '<span class="txt">' + (t.time ? '<span class="tm">' + esc(t.time) + BELL + "</span>" : "") + '<span class="tt" data-notr>' + esc(t.t) + "</span></span>" +
             (past ? "" : (ms ? '<button class="act mvm" data-act="mv" aria-label="Flytta till idag" title="Flytta till idag">→</button>' : "") +
             '<button class="act x" data-act="del" aria-label="Ta bort" title="Ta bort">×</button>' +
             '<button class="swdel" data-act="del" aria-label="Ta bort" tabindex="-1">×</button>') + "</li>";
@@ -618,7 +741,7 @@
     var c = e.target.closest("[data-clear]");
     if (c) { clearDone(c.getAttribute("data-clear")); return; }
     var sg = e.target.closest("[data-sug]");
-    if (sg) { push(sg.getAttribute("data-k"), { id: uid(), t: sg.getAttribute("data-sug"), d: false }); save(); render(); return; }
+    if (sg) { push(sg.getAttribute("data-k"), { id: uid(), t: t(sg.getAttribute("data-sug")), d: false }); save(); render(); return; }
     var gt = e.target.closest("[data-goto]");
     if (gt) { openKey = gt.getAttribute("data-goto"); render(); scrollOpenDay(); return; }
     if (e.target.closest("[data-nextweek]")) { setWeek(addDays(weekStart, 7)); return; }
@@ -855,6 +978,9 @@
       var on = b.getAttribute("data-acc") === settings.accent; b.classList.toggle("on", on); b.setAttribute("aria-checked", on);
     });
     $("st-acc-n").textContent = ACC[settings.accent];
+    Array.prototype.forEach.call(document.querySelectorAll("[data-set-lang]"), function (b) {
+      var on = b.getAttribute("data-set-lang") === settings.lang; b.classList.toggle("on", on); b.setAttribute("aria-checked", on);
+    });
     $("st-rem").setAttribute("aria-checked", settings.remind);
     $("st-def").textContent = settings.defTime;
   }
@@ -871,6 +997,17 @@
   Array.prototype.forEach.call(document.querySelectorAll("[data-set-theme]"), function (b) {
     b.onclick = function () { settings.theme = b.getAttribute("data-set-theme"); applyTheme(); saveSettings(); };
   });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-set-lang]"), function (b) {
+    b.onclick = function () {
+      if (settings.lang === b.getAttribute("data-set-lang")) return;
+      settings.lang = b.getAttribute("data-set-lang"); saveSettings(); applyLang();
+      /* re-render everything visible so dynamic text follows the new language */
+      renderSettings(); applyTheme();
+      if (document.body.classList.contains("home")) { if (!$("s-add").hidden) renderAdd(); else setTab(tab); }
+      if (ed) renderEdit();
+      if (!cal.hidden) renderCal();
+    };
+  });
   Array.prototype.forEach.call(document.querySelectorAll("[data-acc]"), function (b) {
     b.onclick = function () { settings.accent = b.getAttribute("data-acc"); applyTheme(); saveSettings(); };
   });
@@ -884,6 +1021,7 @@
   var cal = $("cal"), calMonth = null;
   function monthOfWeek() { var th = addDays(weekStart, 3); return new Date(th.getFullYear(), th.getMonth(), 1); }
   function renderCal() {
+    document.querySelector(".calhead").innerHTML = "<span>" + (isEn() ? "W" : "V") + "</span>" + LET.map(function (l) { return "<span>" + l + "</span>"; }).join("");
     var y = calMonth.getFullYear(), m = calMonth.getMonth();
     $("calyear").textContent = y; $("calmonth").textContent = MONTHS[m];
     var start = mondayOf(new Date(y, m, 1)), last = new Date(y, m + 1, 0), curKey = key(weekStart), h = "", r, c;
@@ -1122,7 +1260,7 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) tick(); });
 
   /* ---------- start ---------- */
-  load(); loadSettings(); applyTheme();
+  load(); loadSettings(); applyLang(); applyTheme();
   show(cur() ? "home" : "welcome");
   ensureDemo();
 })();

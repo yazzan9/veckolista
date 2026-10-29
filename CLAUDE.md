@@ -9,7 +9,7 @@ Reference images (390 px wide, 1:1) are in `design/screens/`. Open the matching 
 1. Design and front-end only. Do NOT touch login, signup, password hashing, the demo account, logout logic or any auth code. Do NOT add a backend, network calls, analytics or new dependencies.
 2. Keep vanilla HTML, CSS and JS. Read the whole existing app first and extend it. Do not rewrite it from scratch.
 3. Keep the existing data model and the localStorage key `veckolista-v2`. Only add optional fields (for example `done`, `time`, `day`). New UI settings go in a separate key `veckolista-settings`.
-4. UI text is Swedish. Labels are UPPERCASE in DM Mono. Never use em dashes in UI text.
+4. UI text is written in Swedish in the code; English is the default language and comes from the EN dictionary and EN_PAT patterns in app.js (add an entry for every new Swedish string). Swedish can be chosen in Inställningar. Labels are UPPERCASE in DM Mono. Never use em dashes in UI text.
 5. Everything must work in light and dark theme using the tokens below. No hard coded colors in components.
 6. After each step: run the app, check light and dark, check a 390 px wide viewport, then commit with a short message.
 
