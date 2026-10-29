@@ -100,13 +100,14 @@
 
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
-  var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", red: "RÖD", blue: "BLÅ", mono: "MONO" };
+  var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", salvia: "SALVIA", kobolt: "KOBOLT", mono: "MONO" };
   var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0 };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
       if (s) { for (var k in settings) if (k in s) settings[k] = s[k]; }
       if (!(settings.figure >= 0 && settings.figure < 5)) settings.figure = 0;
+      if (!ACC[settings.accent]) settings.accent = settings.accent === "blue" ? "kobolt" : "orange";
       else if (state.theme) settings.theme = state.theme;
     } catch (e) {}
   }
