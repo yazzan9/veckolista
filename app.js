@@ -294,7 +294,7 @@
     var d = new Date();
     $("wl-wk").textContent = DAYS[(d.getDay() + 6) % 7] + " · " + d.getDate() + " " + MON[d.getMonth()];
     $("wl-num").textContent = pad(isoWeek(d));
-    danceStart();
+    danceStart(true);
   }
 
   /* ---------- welcome stage: the week number and a dot-matrix figure on one floor of dots ----------
@@ -322,20 +322,23 @@
     return m;
   }
   ["point", "down", "robot", "run", "bend"].forEach(function (k) { DPOSE[k + "2"] = dMirror(DPOSE[k]); });
+  /* the loop starts with a wave hello, then quickly breaks into the dance; tempos are relaxed on purpose */
   var DSCENES = [
-    { beat: 500, seq: ["point", "down", "point", "down", "robot", "robot2", "robot", "robot2", "point2", "down2", "point2", "down2"] },
-    { beat: 260, seq: ["run", "run2"] },
-    { beat: 420, seq: ["star", "shut"] },
-    { beat: 900, seq: ["reach", "bend", "reach", "bend2"] },
-    { beat: 320, seq: ["wave", "wave2"] }
+    { ms: 2600, beat: 520, seq: ["wave", "wave2"] },
+    { ms: 8400, beat: 700, seq: ["point", "down", "point", "down", "robot", "robot2", "robot", "robot2", "point2", "down2", "point2", "down2"] },
+    { ms: 6400, beat: 400, seq: ["run", "run2"] },
+    { ms: 6400, beat: 640, seq: ["star", "shut"] },
+    { ms: 7200, beat: 1200, seq: ["reach", "bend", "reach", "bend2"] }
   ];
-  var DSCENE_MS = 6000, dance = { raf: 0, off: 0, last: "" };
+  var DLOOP = DSCENES.reduce(function (s, c) { return s + c.ms; }, 0), dance = { raf: 0, off: 0, t0: 0, last: "" };
   function dAt(t) {
-    var s = Math.floor(t / DSCENE_MS), sc = DSCENES[(s % DSCENES.length + DSCENES.length) % DSCENES.length], local = t - s * DSCENE_MS, step = Math.floor(local / sc.beat);
-    return { pose: DPOSE[sc.seq[step % sc.seq.length]], start: s * DSCENE_MS + step * sc.beat, beat: sc.beat };
+    var lt = ((t % DLOOP) + DLOOP) % DLOOP, base = t - lt, i = 0;
+    while (lt >= DSCENES[i].ms) { lt -= DSCENES[i].ms; base += DSCENES[i].ms; i++; }
+    var sc = DSCENES[i], step = Math.floor(lt / sc.beat);
+    return { pose: DPOSE[sc.seq[step % sc.seq.length]], start: base + step * sc.beat, beat: sc.beat, end: base + sc.ms };
   }
   function dJoints(t) {
-    var b = dAt(t), a = dAt(b.start - 1), p = (t - b.start) / b.beat, k = Math.min(1, p / 0.35), e = 1 - Math.pow(1 - k, 3), J = {};
+    var b = dAt(t), a = b.start <= 0 ? { pose: DPOSE.stand } : dAt(b.start - 1), p = (t - b.start) / b.beat, k = Math.min(1, p / 0.35), e = 1 - Math.pow(1 - k, 3), J = {};
     for (var j in b.pose) J[j] = [a.pose[j][0] + (b.pose[j][0] - a.pose[j][0]) * e, a.pose[j][1] + (b.pose[j][1] - a.pose[j][1]) * e];
     return { J: J, p: p };
   }
@@ -353,7 +356,7 @@
     seg(J.h, J.lk); seg(J.lk, J.lf); seg(J.h, J.rk); seg(J.rk, J.rf);
     put(R(J.lh[0]), R(J.lh[1]), 3); put(R(J.rh[0]), R(J.rh[1]), 3);
     if (!figReduced() && r.p < 0.6) {
-      var cx = (J.lf[0] + J.rf[0]) / 2, front = r.p * 30;
+      var cx = (J.lf[0] + J.rf[0]) / 2, front = r.p * 22;
       for (x = -ox; x < DW; x++) { var d = Math.abs(x - cx); if (Math.abs(d - front) < 0.8) put(x, DH - 1, 3); else if (d < front && d > front - 5) put(x, DH - 1, 2); }
     }
     return g;
@@ -374,13 +377,13 @@
   function danceLoop(now) {
     dance.raf = 0;
     if ($("s-welcome").hidden || document.hidden) return;
-    dDraw(dFrame(figReduced() ? 450 : now + dance.off));
+    dDraw(dFrame(figReduced() ? 450 : now - dance.t0 + dance.off));
     if (!figReduced()) dance.raf = requestAnimationFrame(danceLoop);
   }
-  function danceStart() { figColors(); dance.last = ""; if (!dance.raf) dance.raf = requestAnimationFrame(danceLoop); }
+  function danceStart(fresh) { figColors(); dance.last = ""; if (fresh) { dance.t0 = performance.now(); dance.off = 0; } if (!dance.raf) dance.raf = requestAnimationFrame(danceLoop); }
   $("wl-dance").onclick = function () {
-    var t = performance.now() + dance.off;
-    dance.off += DSCENE_MS - (t % DSCENE_MS); buzz(6); danceStart();
+    var t = performance.now() - dance.t0 + dance.off, a = dAt(t);
+    dance.off += a.end - t; buzz(6); danceStart();
   };
   document.addEventListener("visibilitychange", function () { if (!document.hidden && !$("s-welcome").hidden) danceStart(); });
   window.addEventListener("resize", function () { if (!$("s-welcome").hidden) { dance.last = ""; danceStart(); } });
