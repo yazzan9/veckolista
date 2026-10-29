@@ -22,27 +22,30 @@
   --bg: #2a2a29; --surface: #363635; --fg: #eeede9; --mute: #8f8d88;
   --line: #4a4a48; --dot-off: #4b4b49; --accent: #ff5a2c; color-scheme: dark;
 }
-/* accent choices from Inställningar; orange is the default above.
+/* accent choices from Inställningar; orange is the default above. All five are drawn from the same warm, slightly
+   dusty world as the greys: orange, a dusty rose, ochre, slate blue and mono.
    --accent fills shapes, --accent-ink is the same hue deep enough to read as text on bg/surface,
-   --on-accent is text on an accent fill (dark on the pale pink and sage). */
+   --on-accent is text on an accent fill (dark on the pale rose and ochre). */
 :root {
   --accent-ink: var(--accent); --on-pale: #1b1b1a;
-  --acc-orange: #ff4a1c; --acc-rosa: #f2a6b9; --acc-salvia: #8fae8a; --acc-kobolt: #2f4bff;
-  --ink-rosa: #b4436a; --ink-salvia: #4f6e4b; --ink-kobolt: #2f4bff;
+  --acc-orange: #ff4a1c; --acc-rosa: #e7a3a7; --acc-ockra: #d49b32; --acc-skiffer: #4c6a80;
+  --ink-rosa: #a8505a; --ink-ockra: #8a6114; --ink-skiffer: #3f5a6e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --acc-orange: #ff5a2c; --acc-rosa: #f5b3c4; --acc-salvia: #a3c29d; --acc-kobolt: #5b6dff;
-    --ink-rosa: #f5b3c4; --ink-salvia: #a3c29d; --ink-kobolt: #8592ff;
+    --acc-orange: #ff5a2c; --acc-rosa: #e9aeb1; --acc-ockra: #e0aa45; --acc-skiffer: #86a2b7;
+    --ink-rosa: #e9aeb1; --ink-ockra: #e0aa45; --ink-skiffer: #9cb5c7;
   }
 }
 :root[data-theme="dark"] {
-  --acc-orange: #ff5a2c; --acc-rosa: #f5b3c4; --acc-salvia: #a3c29d; --acc-kobolt: #5b6dff;
-  --ink-rosa: #f5b3c4; --ink-salvia: #a3c29d; --ink-kobolt: #8592ff;
+  --acc-orange: #ff5a2c; --acc-rosa: #e9aeb1; --acc-ockra: #e0aa45; --acc-skiffer: #86a2b7;
+  --ink-rosa: #e9aeb1; --ink-ockra: #e0aa45; --ink-skiffer: #9cb5c7;
 }
 :root[data-accent="rosa"] { --accent: var(--acc-rosa); --accent-ink: var(--ink-rosa); --on-accent: var(--on-pale); }
-:root[data-accent="salvia"] { --accent: var(--acc-salvia); --accent-ink: var(--ink-salvia); --on-accent: var(--on-pale); }
-:root[data-accent="kobolt"] { --accent: var(--acc-kobolt); --accent-ink: var(--ink-kobolt); }
+:root[data-accent="ockra"] { --accent: var(--acc-ockra); --accent-ink: var(--ink-ockra); --on-accent: var(--on-pale); }
+:root[data-accent="skiffer"] { --accent: var(--acc-skiffer); --accent-ink: var(--ink-skiffer); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="skiffer"] { --on-accent: var(--on-pale); } }
+:root[data-theme="dark"][data-accent="skiffer"] { --on-accent: var(--on-pale); }
 :root[data-accent="mono"] { --accent: var(--fg); --on-accent: var(--bg); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -461,8 +464,8 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .sw button.on { box-shadow: 0 0 0 2px var(--fg) inset; }
 [data-acc="orange"] i { background: var(--acc-orange); }
 [data-acc="rosa"] i { background: var(--acc-rosa); }
-[data-acc="salvia"] i { background: var(--acc-salvia); }
-[data-acc="kobolt"] i { background: var(--acc-kobolt); }
+[data-acc="ockra"] i { background: var(--acc-ockra); }
+[data-acc="skiffer"] i { background: var(--acc-skiffer); }
 [data-acc="mono"] i { background: var(--fg); }
 .tog { width: 50px; height: 30px; border-radius: 15px; background: var(--line); position: relative; flex: none; transition: background .15s; }
 .tog i { position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); transition: transform .15s; }

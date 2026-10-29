@@ -128,7 +128,7 @@
 
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
-  var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", salvia: "SALVIA", kobolt: "KOBOLT", mono: "MONO" };
+  var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", ockra: "OCKRA", skiffer: "SKIFFER", mono: "MONO" };
   var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en" };
   function loadSettings() {
     try {
@@ -137,7 +137,7 @@
       else if (state.theme) settings.theme = state.theme;
       if (!(settings.figure >= 0 && settings.figure < 5)) settings.figure = 0;
       if (settings.lang !== "sv") settings.lang = "en";
-      if (!ACC[settings.accent]) settings.accent = settings.accent === "blue" ? "kobolt" : "orange";
+      if (!ACC[settings.accent]) settings.accent = { blue: "skiffer", kobolt: "skiffer", salvia: "ockra" }[settings.accent] || "orange";
     } catch (e) {}
   }
   function saveSettings() { try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch (e) {} }
@@ -173,13 +173,13 @@
     "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",
     "FLYTTAR UPPGIFTEN TILL I MORGON. DEN FÖRSVINNER FRÅN IDAG.": "MOVES THE TASK TO TOMORROW. IT DISAPPEARS FROM TODAY.",
     "INSTÄLLNINGAR": "SETTINGS", "KONTO": "ACCOUNT", "UTSEENDE": "APPEARANCE", "TEMA": "THEME", "LJUS": "LIGHT", "MÖRK": "DARK", "FÄRG": "COLOUR",
-    "ROSA": "PINK", "SALVIA": "SAGE", "KOBOLT": "COBALT", "PÅMINNELSER": "REMINDERS", "NÄR EN UPPGIFT HAR TID": "WHEN A TASK HAS A TIME", "STANDARDTID": "DEFAULT TIME",
+    "ROSA": "ROSE", "OCKRA": "OCHRE", "SKIFFER": "SLATE", "PÅMINNELSER": "REMINDERS", "NÄR EN UPPGIFT HAR TID": "WHEN A TASK HAS A TIME", "STANDARDTID": "DEFAULT TIME",
     "LOGGA UT": "LOG OUT", "SPRÅK": "LANGUAGE", "VECKOLISTA · VERSION 1.0": "VECKOLISTA · VERSION 1.0", "DU ÄR UTLOGGAD": "YOU ARE LOGGED OUT",
     "Visning": "View", "Mobilvy": "Phone view", "Datorvy": "Desktop view", "Byt tema": "Change theme", "Inställningar": "Settings", "Huvudmeny": "Main menu",
     "Dagens citat": "Quote of the day", "Idag": "Today", "Öppna idag i Plan": "Open today in Plan", "Lägg till uppgift": "Add task", "Lägg till": "Add", "Vecka": "Week",
     "Öppna kalender": "Open calendar", "Nästa": "Next", "Öppna nästa uppgift i Plan": "Open the next task in Plan", "Veckan": "This week", "Förra veckan": "Previous week",
     "Nästa vecka": "Next week", "Kalender": "Calendar", "Stäng kalendern": "Close calendar", "Förra månaden": "Previous month", "Nästa månad": "Next month", "Stäng": "Close",
-    "Tema": "Theme", "Färg": "Colour", "Rosa": "Pink", "Salvia": "Sage", "Kobolt": "Cobalt", "Påminnelser": "Reminders", "Påminnelse": "Reminder", "Standardtid": "Default time",
+    "Tema": "Theme", "Färg": "Colour", "Rosa": "Rose", "Ockra": "Ochre", "Skiffer": "Slate", "Påminnelser": "Reminders", "Påminnelse": "Reminder", "Standardtid": "Default time",
     "Flytta till idag": "Move to today", "Ta bort": "Delete", "Tid, påminnelse och upprepning": "Time and reminder", "Språk": "Language",
     "person": "person", "hund": "dog", "robot": "robot", "katt": "cat", "fågel": "bird", "ljus": "light", "mörk": "dark",
     "Det räcker att börja. Resten kommer.": "Just start. The rest will follow.", "En liten uppgift i taget.": "One small task at a time.",
