@@ -151,7 +151,7 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", korall: "KORALL", mint: "MINT", lime: "LIME", bla: "BLÅ", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null, recap: null };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
@@ -180,7 +180,7 @@
     "ALLT SPARAS BARA PÅ DEN HÄR ENHETEN": "SAVED ON THIS DEVICE ONLY", "SKRIV DITT NAMN FÖRST": "TYPE YOUR NAME FIRST",
     "Ditt namn": "Your name", "Kom igång": "Get started", "Tillbaka": "Back", "Figur som rör sig. Tryck för nästa": "Moving figure. Tap for the next one",
     "GOD NATT": "GOOD NIGHT", "GOD MORGON": "GOOD MORNING", "GOD DAG": "GOOD AFTERNOON", "GOD KVÄLL": "GOOD EVENING",
-    "DAGENS CITAT": "QUOTE OF THE DAY", "KOMMANDE": "COMING UP", "NÄSTA: INGET PLANERAT": "NEXT: NONE", "Kommande": "Coming up", "VISA HELA VECKAN": "SHOW THE WHOLE WEEK", "I MORGON": "TOMORROW", "Föregående citat": "Previous quote", "Nästa citat": "Next quote", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
+    "DAGENS CITAT": "QUOTE OF THE DAY", "KOMMANDE": "COMING UP", "VECKAN SOM GICK": "LAST WEEK", "BÄSTA DAG": "BEST DAY", "NÄSTA: INGET PLANERAT": "NEXT: NONE", "Kommande": "Coming up", "VISA HELA VECKAN": "SHOW THE WHOLE WEEK", "I MORGON": "TOMORROW", "Föregående citat": "Previous quote", "Nästa citat": "Next quote", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
     "MED PÅMINNELSE": "WITH REMINDER", "PÅMINNELSER AV": "REMINDERS OFF", "INGET MER": "NOTHING MORE", "INGET PLANERAT": "NOTHING PLANNED",
     "NJUT AV DAGEN": "ENJOY THE DAY", "INGET ÄNNU": "NOTHING YET", "ÄNNU INGEN TID": "NO TIME YET", "TID = PÅMINNELSE": "TIME = REMINDER",
     "INGEN SERIE ÄNNU": "NO STREAK YET", "DIN FÖRSTA VECKA BÖRJAR HÄR": "YOUR FIRST WEEK STARTS HERE", "NÄSTA VECKA": "NEXT WEEK", "PLANERA I FÖRTID": "PLAN AHEAD",
@@ -211,7 +211,7 @@
     [/^(\d+) UPPGIFT$/, "$1 TASK"], [/^(\d+) UPPGIFTER$/, "$1 TASKS"], [/^(\d+) MISSADE$/, "$1 MISSED"], [/^(\d+) KVAR$/, "$1 LEFT"], [/^(\d+) KVAR IDAG$/, "$1 LEFT TODAY"],
     [/^\/ (\d+) KLARA$/, "/ $1 DONE"], [/^(\d+) \/ (\d+) KLARA$/, "$1 / $2 DONE"], [/^(\d+) KLARA RENSADE$/, "$1 DONE CLEARED"], [/^(\d+) KLAR RENSAD$/, "$1 DONE CLEARED"],
     [/^SERIE: (\d+) DAG$/, "STREAK: $1 DAY"], [/^SERIE: (\d+) DAGAR$/, "STREAK: $1 DAYS"], [/^OM (\d+) VECKOR$/, "IN $1 WEEKS"], [/^VECKA (\d+)$/, "WEEK $1"],
-    [/^VALD: VECKA (\d+)$/, "SELECTED: WEEK $1"], [/^Vecka (\d+)$/, "Week $1"], [/^HEJ (.+)$/, "HI $1"], [/^NÄSTA: (.+)$/, function (m, a) { return "NEXT: " + tr(a); }],
+    [/^VALD: VECKA (\d+)$/, "SELECTED: WEEK $1"], [/^Vecka (\d+)$/, "Week $1"], [/^PLANERA VECKA (\d+)$/, "PLAN WEEK $1"], [/^HEJ (.+)$/, "HI $1"], [/^NÄSTA: (.+)$/, function (m, a) { return "NEXT: " + tr(a); }],
     [/^FLYTTAD TILL (.+)$/, function (m, a) { return "MOVED TO " + tr(a); }], [/^PÅMINNER DIG (.+)$/, function (m, a) { return "REMINDS YOU " + tr(a); }],
     [/^PÅMINNELSE (.+)$/, "REMINDER $1"], [/^(.+) BORTTAGEN$/, "$1 DELETED"], [/^Klar: (.*)$/, "Done: $1"],
     [/^Figur: (.+)\. Tryck för nästa figur$/, function (m, a) { return "Figure: " + tr(a) + ". Tap for the next one"; }],
@@ -680,6 +680,7 @@
     var u = cur();
     $("over-prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
     render();
+    clearTimeout(recapT); recapT = setTimeout(maybeRecap, 700);
   }
   function sorted(ts) {
     return ts.slice().sort(function (a, b) {
@@ -1131,7 +1132,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (!$("party").hidden) endParty(); else if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
+    if (!$("party").hidden) endParty(); else if (!$("recap").hidden) closeRecap(); else if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
 
   /* ---------- figur: a 9x9 dot-matrix companion next to the name ----------
@@ -1321,6 +1322,34 @@
     party.end = setTimeout(function () { el.hidden = true; el.classList.remove("out"); }, 300);
   }
   $("party").onclick = endParty;
+
+  /* ---------- veckan som gick: once per week, a short look back at last week, then into planning ---------- */
+  var recapT = null;
+  function maybeRecap() {
+    if (!cur() || !$("s-welcome").hidden || !$("party").hidden) return;
+    var pm = addDays(mondayOf(new Date()), -7), pk = key(pm), seen = settings.recap || {}, days = [], tot = 0, dn = 0, best = -1, bestN = 0, i;
+    if (seen[state.session] === pk) return;
+    for (i = 0; i < 7; i++) { var ts = list(key(addDays(pm, i))), d = ts.filter(function (t) { return t.d; }).length; days.push(ts); tot += ts.length; dn += d; if (d > bestN) { bestN = d; best = i; } }
+    if (!tot) return;
+    seen[state.session] = pk; settings.recap = seen; saveSettings();
+    $("rc-wk").textContent = "VECKA " + isoWeek(pm);
+    $("rc-n").textContent = dn; $("rc-of").textContent = "/ " + tot + " KLARA";
+    $("rc-best").textContent = best < 0 ? "INGEN" : DAYS[best];
+    $("rc-pct").textContent = Math.round(dn / tot * 100) + "%";
+    $("rc-go-t").textContent = "PLANERA VECKA " + isoWeek(new Date());
+    var h = "";
+    days.forEach(function (ts, c) {
+      h += '<div class="rc-col">';
+      ts.slice(0, 8).forEach(function (t, j) { h += '<i class="' + (t.d ? "on" : "") + '" style="animation-delay:' + (300 + c * 90 + j * 45) + 'ms"></i>'; });
+      if (!ts.length) h += '<i class="ring" style="animation-delay:' + (300 + c * 90) + 'ms"></i>';
+      h += '<span>' + LET[c] + "</span></div>";
+    });
+    $("rc-cols").innerHTML = h;
+    $("recap").hidden = false; $("rc-close").focus();
+  }
+  function closeRecap() { $("recap").hidden = true; }
+  $("rc-close").onclick = closeRecap;
+  $("rc-go").onclick = function () { closeRecap(); goPlanToday(false); };
 
   /* ---------- a small cheer for every finished task: a dot person jumps for joy in a pill above the tab bar ---------- */
   var CHEERS = ["SNYGGT!", "BRA JOBBAT!", "EN MINDRE!", "TOPPEN!", "KLART!"], CHEER_SCENES = [{ ms: 1e9, beat: 300, seq: ["vup", "squat", "vup", "squat", "star", "shut"] }];

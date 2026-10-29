@@ -599,6 +599,27 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
   .ov:not(.full) > .sheet .grab { display: none; }
 }
 
+/* veckan som gick: full-screen look back at last week */
+.recap { position: fixed; inset: 0; z-index: 65; background: var(--bg); overflow-y: auto; animation: sheetup .3s ease-out; padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 max(20px, env(safe-area-inset-left, 0px)); }
+.recap[hidden] { display: none; }
+.rc-in { max-width: 460px; margin: 0 auto; padding: calc(20px + env(safe-area-inset-top, 0px)) 0 32px; min-height: 100%; display: flex; flex-direction: column; }
+.rc-wk { margin-top: 28px; font-family: var(--f-display); font-weight: 800; font-size: 48px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
+.rc-big { display: flex; align-items: flex-end; gap: 12px; margin-top: 18px; }
+.rc-big b { font-family: var(--f-dot); font-weight: 800; font-size: 120px; line-height: .8; letter-spacing: .02em; }
+.rc-big span { font-size: 12px; letter-spacing: .14em; color: var(--mute); padding-bottom: 6px; }
+.rc-cols { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 32px; padding: 16px 8px; border-radius: 22px; background: var(--surface); }
+.rc-col { display: flex; flex-direction: column-reverse; align-items: center; gap: 6px; min-height: 150px; }
+.rc-col i { width: 14px; height: 14px; border-radius: 50%; background: var(--dot-off); animation: rcpop .35s cubic-bezier(.2, .9, .3, 1.4) backwards; }
+.rc-col i.on { background: var(--accent); }
+.rc-col i.ring { background: transparent; border: 1.5px solid var(--dot-off); }
+.rc-col span { order: -1; font-size: 10px; letter-spacing: .1em; color: var(--mute); margin-top: 4px; }
+@keyframes rcpop { from { transform: scale(0); opacity: 0; } }
+.rc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 24px; }
+.rc-stats div { background: var(--surface); border-radius: 22px; padding: 14px 18px; }
+.rc-stats b { display: block; margin-top: 6px; font-family: var(--f-display); font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; }
+.rc-in .btn { margin-top: auto; min-height: 54px; }
+body:has(#recap:not([hidden])) .tabbar, body:has(#recap:not([hidden])) .tabfade { display: none; }
+
 /* cheer pill after each finished task */
 .cheer { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 61; width: min(350px, calc(100% - 40px)); display: flex; align-items: center; gap: 12px; padding: 4px 22px 4px 12px; border-radius: 26px; background: var(--fg); color: var(--bg); }
 .cheer[hidden] { display: none; }

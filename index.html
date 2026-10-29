@@ -287,6 +287,20 @@
 
 <div id="toast" class="toast" hidden role="status"></div>
 
+<div id="recap" class="recap" hidden role="dialog" aria-modal="true" aria-labelledby="rc-h">
+  <div class="rc-in">
+    <div class="bar"><span class="t-l" id="rc-h">VECKAN SOM GICK</span><span class="sp"></span><button class="pill rnd" id="rc-close" aria-label="Stäng">×</button></div>
+    <div class="rc-wk" id="rc-wk"></div>
+    <div class="rc-big"><b id="rc-n">0</b><span id="rc-of"></span></div>
+    <div class="rc-cols" id="rc-cols" aria-hidden="true"></div>
+    <div class="rc-stats">
+      <div><span class="t-l">BÄSTA DAG</span><b id="rc-best"></b></div>
+      <div><span class="t-l">KLART</span><b id="rc-pct"></b></div>
+    </div>
+    <button class="btn pri" id="rc-go" type="button"><span id="rc-go-t"></span> <span aria-hidden="true">→</span></button>
+  </div>
+</div>
+
 <div id="cheer" class="cheer" hidden role="status"><canvas id="cheer-c" aria-hidden="true"></canvas><div class="ch-t"><b id="cheer-b"></b><span id="cheer-s"></span></div></div>
 
 <div id="party" class="party" hidden role="status">
