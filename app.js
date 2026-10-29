@@ -28,28 +28,17 @@
     if (!m || !t) return { t: s.trim(), time: "" };
     return { t: t, time: pad(+(m[1] || m[3])) + ":" + (m[2] || m[4] || "00") };
   }
-  /* time pickers: big dot digits. Tap the hour or minute to get a grid of every value (any time in two taps),
-     or use + and − to fine-tune; holding + or − repeats. */
+  /* time pickers: big dot digits you type into (tap the hour or minute and type), or fine-tune with + and −;
+     holding + or − repeats. Whatever is typed is clamped to a real time. */
   function tpCol(u, what) {
     return '<div class="tp-col"><button type="button" class="rnd" data-tp="' + u + '+" aria-label="' + what + ' senare">+</button>' +
-      '<button type="button" class="tp-n" data-tp="g-' + u + '" data-tpv="' + u + '" aria-label="' + (u === "h" ? "Välj timme" : "Välj minut") + '"></button>' +
+      '<input class="tp-n" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" data-tpv="' + u + '" placeholder="--" aria-label="' + (u === "h" ? "Timme" : "Minut") + '">' +
       '<button type="button" class="rnd" data-tp="' + u + '-" aria-label="' + what + ' tidigare">−</button></div>';
   }
-  function tpBody() { return '<div class="tp" role="group" aria-label="Välj tid">' + tpCol("h", "En timme") + '<b class="tp-c" aria-hidden="true">:</b>' + tpCol("m", "Fem minuter") + '</div><div class="tp-grid" hidden></div>'; }
-  function tpGrid(host, unit, cur) {
-    var g = host.querySelector(".tp-grid"), n = unit === "h" ? 24 : 12, h = '<div class="tp-gl">' + (unit === "h" ? "TIMME" : "MINUT") + '</div><div class="tp-g">', i, v;
-    for (i = 0; i < n; i++) { v = unit === "h" ? i : i * 5; h += '<button type="button" class="tp-gb' + (v === cur ? " on" : "") + '" data-tp="s' + unit + ":" + v + '">' + pad(v) + "</button>"; }
-    g.innerHTML = h + "</div>"; g.hidden = !unit;
-    Array.prototype.forEach.call(host.querySelectorAll(".tp-n"), function (d) { d.classList.toggle("on", d.getAttribute("data-tpv") === unit); });
-  }
-  function tpGridClose(host) { var g = host.querySelector(".tp-grid"); if (g) { g.hidden = true; g.innerHTML = ""; } Array.prototype.forEach.call(host.querySelectorAll(".tp-n"), function (d) { d.classList.remove("on"); }); }
-  /* one action on h:m; returns the new [h, m] and opens/closes the grid as a side effect */
-  function tpAct(host, a, h, m) {
+  function tpBody() { return '<div class="tp" role="group" aria-label="Välj tid">' + tpCol("h", "En timme") + '<b class="tp-c" aria-hidden="true">:</b>' + tpCol("m", "Fem minuter") + '</div>'; }
+  function tpAct(a, h, m) {
     if (a === "h+") h = (h + 1) % 24; else if (a === "h-") h = (h + 23) % 24;
     else if (a === "m+") m = (Math.floor(m / 5) * 5 + 5) % 60; else if (a === "m-") m = (Math.ceil(m / 5) * 5 + 55) % 60;
-    else if (a === "g-h" || a === "g-m") { var u = a.slice(2), open = host.querySelector('.tp-n.on[data-tpv="' + u + '"]'); if (open) tpGridClose(host); else tpGrid(host, u, u === "h" ? h : m); return [h, m]; }
-    else if (a.indexOf("sh:") === 0) { h = +a.slice(3); tpGrid(host, "m", m); return [h, m]; }
-    else if (a.indexOf("sm:") === 0) { m = +a.slice(3); tpGridClose(host); return [h, m]; }
     return [h, m];
   }
   function tpHold(host) {
@@ -62,45 +51,79 @@
     });
     ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { host.addEventListener(ev, stop); });
   }
+  /* typing into the digits. t = { cur: () => [h, m] | null, apply: (h, m), start: () => "HH:MM", redraw: () } */
+  function tpType(host, t) {
+    host.__tt = t;
+    if (host.__typing) return; host.__typing = true;
+    function inp(u) { return host.querySelector('[data-tpv="' + u + '"]'); }
+    function isDigit(el) { return el && el.classList && el.classList.contains("tp-n"); }
+    host.addEventListener("focusin", function (e) { var el = e.target; if (isDigit(el)) setTimeout(function () { try { el.select(); } catch (x) {} }, 0); });
+    host.addEventListener("input", function (e) {
+      var el = e.target; if (!isDigit(el)) return;
+      var tt = host.__tt, u = el.getAttribute("data-tpv"), v = el.value.replace(/\D/g, "").slice(0, 2); el.value = v;
+      var s = tt.cur(), st = tt.start().split(":"), h = s ? s[0] : +st[0], m = s ? s[1] : (u === "h" ? 0 : +st[1]);
+      if (u === "h") {
+        if (v.length === 1 && +v > 2) { tt.apply(+v, m); inp("m").focus(); return; }
+        if (v.length === 2) { tt.apply(Math.min(23, +v), m); inp("m").focus(); }
+        return;
+      }
+      if (v.length === 2) { tt.apply(h, Math.min(59, +v)); el.blur(); }
+    });
+    host.addEventListener("focusout", function (e) {
+      var el = e.target; if (!isDigit(el)) return;
+      var tt = host.__tt, u = el.getAttribute("data-tpv");
+      if (el.value === "") { tt.redraw(); return; }
+      var s = tt.cur(), st = tt.start().split(":"), h = s ? s[0] : +st[0], m = s ? s[1] : (u === "h" ? 0 : +st[1]), n = +el.value;
+      if (u === "h") h = Math.min(23, n); else m = Math.min(59, n);
+      tt.apply(h, m);
+    });
+    host.addEventListener("keydown", function (e) { if (isDigit(e.target) && e.key === "Enter") { e.preventDefault(); e.target.blur(); } });
+  }
   function openPicker(host, value, done) {
     var p = (value || settings.defTime).split(":"), h = +p[0], m = +p[1];
     host.innerHTML = tpBody() + '<div class="tp-acts"><button type="button" class="btn out" data-tp="no">AVBRYT</button><button type="button" class="btn pri" data-tp="ok">KLAR</button></div>';
-    function draw() { host.querySelector('[data-tpv="h"]').textContent = pad(h); host.querySelector('[data-tpv="m"]').textContent = pad(m); }
+    function draw() { host.querySelector('[data-tpv="h"]').value = pad(h); host.querySelector('[data-tpv="m"]').value = pad(m); }
     function finish(ok) { closePicker(host); done(ok ? pad(h) + ":" + pad(m) : null); }
     host.onclick = function (e) {
       e.stopPropagation();
       var b = e.target.closest("[data-tp]"); if (!b) return;
       var a = b.getAttribute("data-tp");
       if (a === "ok" || a === "no") { finish(a === "ok"); return; }
-      var r = tpAct(host, a, h, m); h = r[0]; m = r[1]; draw();
+      var r = tpAct(a, h, m); h = r[0]; m = r[1]; draw();
     };
     host.confirm = function () { finish(true); };
+    tpType(host, { cur: function () { return [h, m]; }, apply: function (nh, nm) { h = nh; m = nm; draw(); }, start: function () { return pad(h) + ":" + pad(m); }, redraw: draw });
     tpHold(host); host.hidden = false; draw();
     host.querySelector('[data-tp="ok"]').focus({ preventScroll: true });
     host.scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" });
   }
-  /* inline picker for a new task: empty (no reminder) until the first touch, then the shown time is the reminder */
+  /* inline picker for a new task: empty (no reminder) until a time is typed or stepped, then the shown time is the reminder */
   function inlinePicker(host, get, set, start) {
     host.innerHTML = '<div class="tr-head"><span class="sl">TID = PÅMINNELSE</span><button type="button" class="tr-clear" data-tp="clear">INGEN TID</button></div>' +
       tpBody() + '<div class="ck-cap tp-cap"></div>';
     function draw() {
-      var v = get(), p = v ? v.split(":") : ["--", "--"];
-      host.querySelector('[data-tpv="h"]').textContent = p[0]; host.querySelector('[data-tpv="m"]').textContent = p[1];
+      var v = get(), p = v ? v.split(":") : ["", ""];
+      host.querySelector('[data-tpv="h"]').value = p[0]; host.querySelector('[data-tpv="m"]').value = p[1];
       host.classList.toggle("empty", !v);
       host.querySelector('[data-tp="clear"]').hidden = !v;
       var cap = host.querySelector(".tp-cap");
-      cap.textContent = v ? (settings.remind ? "PÅMINNER DIG " + v : "PÅMINNELSER AV · " + v) : "INGEN PÅMINNELSE · TRYCK PÅ SIFFRORNA";
+      cap.textContent = v ? (settings.remind ? "PÅMINNER DIG " + v : "PÅMINNELSER AV · " + v) : "INGEN PÅMINNELSE · SKRIV TIDEN ELLER ANVÄND + OCH −";
       cap.classList.toggle("on", !!v && settings.remind);
     }
     host.onclick = function (e) {
       var b = e.target.closest("[data-tp]"); if (!b) return;
       e.stopPropagation();
       var a = b.getAttribute("data-tp");
-      if (a === "clear") { tpGridClose(host); set(""); draw(); return; }
+      if (a === "clear") { set(""); draw(); return; }
       var v = get() || start(), p = v.split(":"), first = !get();
-      var r = first && /^[hm][+-]$/.test(a) ? [+p[0], +p[1]] : tpAct(host, a, +p[0], +p[1]);
+      var r = first ? [+p[0], +p[1]] : tpAct(a, +p[0], +p[1]);
       set(pad(r[0]) + ":" + pad(r[1])); draw();
     };
+    tpType(host, {
+      cur: function () { var v = get(); return v ? v.split(":").map(Number) : null; },
+      apply: function (h, m) { set(pad(h) + ":" + pad(m)); draw(); },
+      start: start, redraw: draw
+    });
     tpHold(host); host.draw = draw; draw();
   }
   function closePicker(host) { if (!host || host.hidden) return; host.hidden = true; host.innerHTML = ""; host.onclick = null; host.confirm = null; }
@@ -151,7 +174,7 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", korall: "KORALL", mint: "MINT", lime: "LIME", bla: "BLÅ", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null, recap: null };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null, recap: null, figTapped: false };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
@@ -189,7 +212,7 @@
     "Lägg till en uppgift...": "Add a task...", "Första uppgiften...": "Your first task...", "↑ BÖRJA HÄR. KLOCKAN = PÅMINNELSE": "↑ START HERE. CLOCK = REMINDER",
     "RENSA KLARA": "CLEAR DONE", "SKRIVSKYDDAD": "READ ONLY", "VECKAN ÄR AVSLUTAD": "THE WEEK IS OVER", "AVSLUTAD": "FINISHED", "TOM VECKA": "EMPTY WEEK",
     "NY UPPGIFT": "NEW TASK", "LÄGG TILL": "ADD", "TILLAGD": "ADDED", "INGA UPPGIFTER ÄNNU": "NO TASKS YET", "Vad ska göras?": "What needs doing?", "Ny uppgift": "New task", "Välj dag": "Pick a day",
-    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "TRYCK PÅ SIFFRORNA": "TAP THE NUMBERS", "SNYGGT!": "NICE!", "BRA JOBBAT!": "GOOD JOB!", "EN MINDRE!": "ONE LESS!", "TOPPEN!": "GREAT!", "KLART!": "DONE!", "TIMME": "HOUR", "MINUT": "MINUTE", "Välj timme": "Pick the hour", "Välj minut": "Pick the minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
+    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "SKRIV TIDEN ELLER ANVÄND + OCH −": "TYPE THE TIME OR USE + AND −", "LÄGG TILL PÅMINNELSE": "ADD A REMINDER", "SNYGGT!": "NICE!", "BRA JOBBAT!": "GOOD JOB!", "EN MINDRE!": "ONE LESS!", "TOPPEN!": "GREAT!", "KLART!": "DONE!", "Timme": "Hour", "Minut": "Minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
     "Välj tid": "Pick a time", "Tid": "Time", "En timme senare": "One hour later", "En timme tidigare": "One hour earlier", "Fem minuter senare": "Five minutes later", "Fem minuter tidigare": "Five minutes earlier",
     "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MARKERA SOM KLAR": "MARK AS DONE",
     "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",
@@ -610,6 +633,7 @@
   }
   function danceStart(fresh) { figColors(); dance.last = ""; if (fresh) { dance.t0 = performance.now(); dance.off = 0; } if (!dance.raf) dance.raf = requestAnimationFrame(danceLoop); }
   $("wl-dance").onclick = function () {
+    markTapped();
     var t = performance.now() - dance.t0 + dance.off, a = dAt(DSCENES, t);
     dance.off += a.end - t; buzz(6); danceStart();
   };
@@ -994,7 +1018,7 @@
   swipeDown(document.querySelector("#edit .panel"), closeEdit);
 
   /* ---------- lägg till ---------- */
-  var addKey = null, addFrom = "plan", addTime = "", addOkT = null;
+  var addKey = null, addFrom = "plan", addTime = "";
   function openAdd(k, from) {
     var nowK = key(new Date());
     addKey = k < nowK ? nowK : k; addFrom = from; addTime = "";
@@ -1002,7 +1026,7 @@
     var s = $("s-add"); s.hidden = false; document.body.classList.add("adding");
     setTabsVisible(true); window.scrollTo(0, 0);
     s.classList.remove("slidein"); void s.offsetWidth; s.classList.add("slidein");
-    $("ad-inp").value = "";
+    $("ad-inp").value = ""; setAdClock(false);
     renderAdd(); $("ad-inp").focus();
   }
   function closeAdd() {
@@ -1022,9 +1046,19 @@
     }
     $("ad-days").innerHTML = h;
   }
-  function addChips() { if ($("ad-tp").draw) $("ad-tp").draw(); }
+  /* the time box stays hidden until the clock icon is pressed; a chosen time shows next to the icon */
+  function setAdClock(open) {
+    $("ad-tp").hidden = !open; $("ad-clock").classList.toggle("on", open); $("ad-clock").setAttribute("aria-expanded", open);
+    if (open) $("ad-tp").scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" });
+  }
+  function adTval() {
+    var at = addTime || parseTime($("ad-inp").value).time, v = $("ad-tval");
+    v.textContent = at || "LÄGG TILL PÅMINNELSE"; v.classList.toggle("set", !!at); $("ad-clock").classList.toggle("has", !!at);
+  }
+  function addChips() { if ($("ad-tp").draw) $("ad-tp").draw(); adTval(); }
+  $("ad-clock").onclick = function () { setAdClock($("ad-tp").hidden); };
   function addStart() { var n = new Date(); return addKey === key(n) && n.getHours() < 23 ? pad(n.getHours() + 1) + ":00" : settings.defTime; }
-  inlinePicker($("ad-tp"), function () { return addTime || parseTime($("ad-inp").value).time; }, function (v) { addTime = v; }, addStart);
+  inlinePicker($("ad-tp"), function () { return addTime || parseTime($("ad-inp").value).time; }, function (v) { addTime = v; adTval(); }, addStart);
   $("ad-back").onclick = closeAdd;
   $("ad-today").onclick = function () { addKey = key(new Date()); renderAdd(); $("ad-inp").focus(); };
   $("ad-days").addEventListener("click", function (e) {
@@ -1037,11 +1071,11 @@
     var inp = $("ad-inp"), p = parseTime(inp.value); if (!p.t) { inp.focus(); return; }
     var nt = { id: uid(), t: p.t, d: false };
     if (addTime || p.time) nt.time = addTime || p.time;
-    push(addKey, nt); save(); inp.value = ""; addTime = ""; renderAdd(); inp.focus();
-    var lbl = $("ad-lbl"), sel = $("ad-days").querySelector(".sel");
-    lbl.textContent = "TILLAGD" + (nt.time ? " · " + nt.time : ""); lbl.classList.add("ok");
-    if (sel) sel.classList.add("pulse");
-    clearTimeout(addOkT); addOkT = setTimeout(function () { lbl.textContent = "NY UPPGIFT"; lbl.classList.remove("ok"); }, 1600);
+    push(addKey, nt); save(); inp.value = ""; addTime = ""; setAdClock(false);
+    /* back to the day the task was made, with the new task pulsing */
+    weekStart = mondayOf(fromKey(addKey)); openKey = addKey; pulseId = nt.id;
+    setTab("plan"); scrollOpenDay(); buzz(8);
+    toast(nt.time ? "TILLAGD · " + nt.time : "TILLAGD");
   });
   if (window.visualViewport) {
     var vv = window.visualViewport;
@@ -1251,7 +1285,12 @@
     $("o-fig").setAttribute("aria-label", "Figur: " + FIGS[settings.figure][0].toLowerCase() + ". Tryck för nästa figur");
     if (!fig.raf) fig.raf = requestAnimationFrame(figLoop);
   }
+  function markTapped() {
+    settings.figTapped = true; saveSettings();
+    $("o-fig").classList.add("tapped"); $("wl-dance").classList.add("tapped");
+  }
   $("o-fig").onclick = function () {
+    markTapped();
     fig.from = settings.figure; fig.t0 = performance.now();
     settings.figure = (settings.figure + 1) % FIGS.length; saveSettings(); buzz(6); figStart();
   };
@@ -1394,6 +1433,7 @@
 
   /* ---------- start ---------- */
   load(); loadSettings(); applyLang(); applyTheme();
+  if (settings.figTapped) { $("o-fig").classList.add("tapped"); $("wl-dance").classList.add("tapped"); }
   show(cur() ? "home" : "welcome");
   ensureDemo();
 })();
