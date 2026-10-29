@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Veckolista film stage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=DM+Mono:wght@400;500&family=Doto:wght@800&display=block">
+<style>
+  /* 540 x 675 css px, rendered at 2x = 1080 x 1350. Nothing here animates on its own:
+     render(t) sets every style from the timeline, so a frame is a pure function of t. */
+  :root { --bg: #0E0E0D; --fg: #EEEDE9; --mute: #77756F; --acc: #FF4A1C; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 540px; height: 675px; overflow: hidden; background: var(--bg); color: var(--fg); }
+  body { font-family: "DM Mono", monospace; -webkit-font-smoothing: antialiased; }
+  .l { position: absolute; inset: 0; }
+  #dots { width: 540px; height: 675px; }
+  #cam { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  .phone { position: absolute; left: -11px; top: -11px; width: 412px; height: 866px; border-radius: 58px; background: #050505;
+    box-shadow: 0 0 0 1.5px #3A3A38, inset 0 0 0 1px #1E1E1D, 0 40px 90px rgba(0, 0, 0, .55); }
+  .screen { position: absolute; left: 0; top: 0; width: 390px; height: 844px; border-radius: 47px; overflow: hidden; background: #000; }
+  iframe { border: 0; width: 390px; height: 844px; display: block; }
+  #band { background: linear-gradient(var(--bg) 0, var(--bg) 150px, rgba(14, 14, 13, 0) 166px); height: 180px; bottom: auto; }
+  .corner { position: absolute; top: 18px; font-size: 8px; letter-spacing: .18em; color: var(--mute); }
+  .corner b { color: var(--acc); font-weight: 400; }
+  #cap { position: absolute; left: 24px; top: 40px; right: 24px; }
+  #cap-k { font-size: 9px; letter-spacing: .16em; color: var(--acc); height: 14px; white-space: pre; }
+  .ln { overflow: hidden; height: 41px; }
+  .ln span { display: block; font: 800 44px/41px "Barlow Condensed", sans-serif; letter-spacing: .005em; white-space: nowrap; }
+  #cap.big .ln { height: 48px; } #cap.big .ln span { font-size: 52px; line-height: 48px; }
+  #rings { pointer-events: none; }
+  /* intro and end card */
+  .mid { position: absolute; left: 0; right: 0; text-align: center; }
+  .wd { font: 800 92px/0.9 "Barlow Condensed", sans-serif; letter-spacing: .005em; }
+  .wd i, .wd2 i { color: var(--acc); font-style: normal; }
+  .hl { font: 800 58px/52px "Barlow Condensed", sans-serif; }
+  .ln2 { overflow: hidden; height: 54px; }
+  .ln2 span { display: block; }
+  .mono { font-size: 9px; letter-spacing: .2em; color: var(--mute); }
+  .week { display: flex; justify-content: center; gap: 26px; }
+  .week div { width: 26px; text-align: center; }
+  .week i { display: block; width: 26px; height: 26px; border-radius: 50%; background: #2A2A29; margin-bottom: 12px; }
+  .week span { font-size: 9px; letter-spacing: .1em; color: var(--mute); }
+</style>
+</head>
+<body>
+<canvas id="dots" class="l"></canvas>
+<div id="cam"><div class="phone"></div><div class="screen" style="left:0;top:0"><iframe id="app" src="/index.html" title="Veckolista"></iframe></div></div>
+<canvas id="rings" class="l" width="1080" height="1350" style="width:540px;height:675px"></canvas>
+<div id="band" class="l"></div>
+<div class="corner" style="left:24px">VECKOLISTA<b>.</b></div>
+<div class="corner" id="cr" style="right:24px">WK 44 · 2026</div>
+<div id="cap"><div id="cap-k"></div><div class="ln"><span></span></div><div class="ln"><span></span></div></div>
+
+<div id="intro" class="l">
+  <div class="mid" id="i-wk" style="top:214px"><div class="mono" id="i-wkl" style="margin-bottom:18px">WEEK 44</div><div class="week" id="i-row"></div></div>
+  <div class="mid" style="top:330px"><div class="ln2"><span class="hl" id="i-h1">ONE WEEK.</span></div><div class="ln2"><span class="hl" id="i-h2">AT A TIME.</span></div></div>
+  <div class="mid" id="i-wd" style="top:282px"><div class="wd">VECKOLISTA<i>.</i></div><div class="mono" id="i-sub" style="margin-top:16px">A WEEK BASED TODO APP</div></div>
+</div>
+<div id="end" class="l">
+  <div class="mid" style="top:214px"><div class="week" id="e-row"></div></div>
+  <div class="mid" style="top:300px"><div class="wd" id="e-wd">VECKOLISTA<i>.</i></div></div>
+  <div class="mid" style="top:400px"><div class="ln2"><span class="hl" id="e-h1" style="font-size:40px;line-height:44px">PLAN THE WEEK.</span></div><div class="ln2"><span class="hl" id="e-h2" style="font-size:40px;line-height:44px;color:var(--acc)">ONE DAY AT A TIME.</span></div></div>
+  <div class="mid mono" id="e-sub" style="top:520px">NO SIGN UP · FREE · RUNS IN YOUR BROWSER</div>
+</div>
+
+<script src="timeline.js"></script>
+<script>
+(function () {
+  var W = 540, H = 675, LET = ["M", "T", "W", "T", "F", "S", "S"];
+  var app = document.getElementById("app"), cam = document.getElementById("cam");
+  var dots = document.getElementById("dots"), rings = document.getElementById("rings");
+  function el(id) { return document.getElementById(id); }
+  function doc() { return app.contentDocument; }
+  function win() { return app.contentWindow; }
+  function q(sel) { var d = doc(); return d && d.querySelector(sel); }
+
+  ["i-row", "e-row"].forEach(function (id) {
+    el(id).innerHTML = LET.map(function (l) { return "<div><i></i><span>" + l + "</span></div>"; }).join("");
+  });
+
+  /* easing: quick and mechanical, no overshoot */
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function eio(x) { x = clamp(x); return x < .5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2; }
+  function eout(x) { x = clamp(x); return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); }
+  function ein(x) { x = clamp(x); return x * x * x; }
+  function lerp(a, b, k) { return a + (b - a) * k; }
+
+  /* ---------- driving the app ---------- */
+  var done = 0, tapLog = [];
+  function center(e) { var r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+  window.act = function (t) {
+    var A = TL.actions;
+    while (done < A.length && A[done].t <= t + 1e-6) {
+      var a = A[done++], d = doc();
+      if (a.act === "tap") {
+        var e = q(a.sel); if (!e) { console.warn("missing " + a.sel); continue; }
+        var p = center(e);
+        tapLog.push({ t: a.t, p: p });
+        if (a.focus) { e.focus({ preventScroll: true }); e.__fresh = true; }
+        e.click();
+        if (a.victory) victory = { t: a.t, p: p };
+      } else if (a.act === "scroll") {
+        var se = q(a.sel); if (!se) continue;
+        var w = win(), by = se.getBoundingClientRect().bottom - (w.innerHeight - a.clear);
+        if (by > 0) scrolls.push({ t: a.t, d: a.d, from: w.scrollY, to: w.scrollY + by });
+      } else if (a.act === "key") {
+        var f = d.activeElement; if (!f || f.value === undefined) continue;
+        f.value = f.__fresh ? a.ch : f.value + a.ch; f.__fresh = false;
+        f.dispatchEvent(new (win().InputEvent)("input", { bubbles: true, data: a.ch, inputType: "insertText" }));
+      }
+    }
+    scrolls.forEach(function (s) { var k = (t - s.t) / s.d; if (k >= 0 && k <= 1 + 1 / 30) win().scrollTo(0, Math.round(lerp(s.from, s.to, eio(k)))); });
+  };
+  var scrolls = [];
+  // a field that receives focus by itself (the minute box after the hour) also gets replaced, like a selected value
+  app.addEventListener("load", function () { doc().addEventListener("focusin", function (e) { e.target.__fresh = true; }); });
+
+  /* CSS animations inside the app run on wall time. Pin each one to the fake clock instead. */
+  var seen = new WeakMap(), lastNow = 0;
+  function syncAnims(fdt) {
+    var w = win(), now = w.performance.now(), list = doc().getAnimations();
+    for (var i = 0; i < list.length; i++) {
+      var an = list[i], st = seen.get(an);
+      if (st === undefined) { st = now - fdt; seen.set(an, st); }
+      if (an.playState !== "paused") an.pause();
+      an.currentTime = now - st;
+    }
+    lastNow = now;
+  }
+
+  /* ---------- camera ---------- */
+  function layoutRect(e) {
+    // position from layout, ignoring transforms, so a sliding sheet does not drag the camera
+    var x = 0, y = 0, n = e, fixed = false, w = win();
+    while (n) { x += n.offsetLeft; y += n.offsetTop; if (w.getComputedStyle(n).position === "fixed") { fixed = true; break; } n = n.offsetParent; }
+    if (!fixed) { x -= w.scrollX; y -= w.scrollY; }
+    return { x: x, y: y, w: e.offsetWidth, h: e.offsetHeight };
+  }
+  var camCache = [];
+  function keyAt(i) {
+    var k = TL.cam[i], o = { s: k.s, cx: k.cx, cy: k.cy, ax: k.ax == null ? 270 : k.ax, ay: k.ay };
+    if (k.sel) {
+      var e = q(k.sel), r = e && e.offsetWidth ? layoutRect(e) : null;
+      if (r) camCache[i] = [r.x + r.w / 2, r.y + r.h / 2];
+      var c = camCache[i] || [195, 422]; o.cx = c[0]; o.cy = c[1];
+    }
+    return o;
+  }
+  function camAt(t) {
+    var C = TL.cam, i = 0;
+    while (i + 1 < C.length && C[i + 1].t - (C[i + 1].d || 0) <= t) i++;
+    var a = keyAt(i);
+    if (i + 1 < C.length || true) {
+      // if a move into key i is still running, blend from key i-1
+      var k = C[i], st = k.t - (k.d || 0);
+      if (i > 0 && t < k.t && k.d) { var p = keyAt(i - 1), e = eio((t - st) / k.d); return mix(p, a, e); }
+    }
+    return a;
+  }
+  function mix(p, a, e) {
+    // interpolate scale in log space so zooms feel even
+    var s = Math.exp(lerp(Math.log(p.s), Math.log(a.s), e));
+    return { s: s, cx: lerp(p.cx, a.cx, e), cy: lerp(p.cy, a.cy, e), ax: lerp(p.ax, a.ax, e), ay: lerp(p.ay, a.ay, e) };
+  }
+  function toStage(c, x, y) { return [c.ax + (x - c.cx) * c.s, c.ay + (y - c.cy) * c.s]; }
+
+  /* ---------- background dot field ---------- */
+  var PITCH = 13.5, dctx = dots.getContext("2d");
+  dots.width = W * 2; dots.height = H * 2;
+  var victory = null;
+  function hash(i, j) { var h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+  function drawDots(t, c, acc) {
+    dctx.setTransform(2, 0, 0, 2, 0, 0); dctx.clearRect(0, 0, W, H);
+    var cols = Math.ceil(W / PITCH), rows = Math.ceil(H / PITCH), x0 = (W - (cols - 1) * PITCH) / 2, y0 = (H - (rows - 1) * PITCH) / 2;
+    var base = "#1D1D1C", lit = [], dim = [], i, j;
+    var vt = victory ? t - victory.t : -1, org = victory ? toStage(c, victory.p[0], victory.p[1]) : [0, 0];
+    var fade = vt > 4.6 ? 1 - clamp((vt - 4.6) / 0.6) : 1;
+    dctx.fillStyle = base; dctx.beginPath();
+    for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
+      var x = x0 + i * PITCH, y = y0 + j * PITCH, r = 1.05;
+      if (vt >= 0 && fade > 0) {
+        var d = Math.hypot(x - org[0], y - org[1]), k = vt * 620 - d;
+        if (k >= 0 && k < 30) { lit.push(x, y, 2.6); continue; }
+        if (k >= 30 && k < 140) { dim.push(x, y, 2.3 - (k - 30) / 110 * .8); continue; }
+        // after the wave: a field that blinks on the beat
+        var beat = (vt % .5) / .5, h = hash(i, j);
+        if (k >= 140 && h < .3) { (h < .3 * (1 - beat) * .5 ? lit : dim).push(x, y, 1.5 + (1 - beat) * .5); continue; }
+      }
+      dctx.moveTo(x + r, y); dctx.arc(x, y, r, 0, 6.2832);
+    }
+    dctx.fill();
+    // falling dots, in step with the confetti in the app
+    if (vt > 0.55 && fade > 0) {
+      for (i = 0; i < cols; i++) {
+        if (hash(i, 7) > .22) continue;
+        var sp = 5 + hash(i, 3) * 7, dl = hash(i, 5) * 1.6, rr = Math.floor(((vt - .55 - dl) * sp) % (rows + 6)) - 3;
+        if (vt - .55 - dl < 0) continue;
+        lit.push(x0 + i * PITCH, y0 + rr * PITCH, 1.8); dim.push(x0 + i * PITCH, y0 + (rr - 1) * PITCH, 1.2);
+      }
+    }
+    [[dim, .5 * fade], [lit, fade]].forEach(function (L) {
+      if (!L[0].length) return; dctx.globalAlpha = L[1]; dctx.fillStyle = acc; dctx.beginPath();
+      for (var n = 0; n < L[0].length; n += 3) { dctx.moveTo(L[0][n] + L[0][n + 2], L[0][n + 1]); dctx.arc(L[0][n], L[0][n + 1], L[0][n + 2], 0, 6.2832); }
+      dctx.fill();
+    });
+    dctx.globalAlpha = 1;
+  }
+
+  /* ---------- tap rings ---------- */
+  var rctx = rings.getContext("2d");
+  function drawRings(t, c, acc) {
+    rctx.setTransform(2, 0, 0, 2, 0, 0); rctx.clearRect(0, 0, W, H);
+    tapLog.forEach(function (tp) {
+      var a = t - tp.t; if (a < 0 || a > .5) return;
+      var p = toStage(c, tp.p[0], tp.p[1]), k = eout(a / .5);
+      rctx.globalAlpha = 1 - clamp(a / .5); rctx.strokeStyle = acc; rctx.lineWidth = 1.6;
+      rctx.beginPath(); rctx.arc(p[0], p[1], 7 + 20 * k, 0, 6.2832); rctx.stroke();
+      if (a < .18) { rctx.globalAlpha = .9; rctx.fillStyle = acc; rctx.beginPath(); rctx.arc(p[0], p[1], 7 * (1 - a / .18), 0, 6.2832); rctx.fill(); }
+    });
+    rctx.globalAlpha = 1;
+  }
+
+  /* ---------- copy ---------- */
+  function lineIn(span, t, t0, out, i) {
+    var a = t - t0 - i * .07, y;
+    if (a < 0) y = 110; else y = 110 * (1 - eout(a / .4));
+    if (out != null && t >= out) y = -110 * ein((t - out) / .22);
+    span.style.transform = "translateY(" + y + "%)";
+  }
+  function typed(s, t, t0) { var n = Math.max(0, Math.floor((t - t0) * 48)); return s.slice(0, n); }
+  var capEl = el("cap"), capK = el("cap-k"), capL = capEl.querySelectorAll(".ln span");
+  function drawCap(t) {
+    var c = null; TL.caps.forEach(function (x) { if (t >= x.t && t < x.out + .25) c = x; });
+    if (!c) { capK.textContent = ""; capL[0].textContent = capL[1].textContent = ""; return; }
+    var k = c.k;
+    if (c.k === "07 / ACCENT" && t >= 34) { var n = q("#st-acc-n"); if (n) k = "07 / " + n.textContent.trim(); }
+    capK.textContent = t >= c.out ? "" : typed(k, t, c.t);
+    capEl.classList.toggle("big", !!c.big);
+    for (var i = 0; i < 2; i++) { capL[i].textContent = c.h[i] || ""; lineIn(capL[i], t, c.t, c.out, i); }
+  }
+
+  function setVis(id, o) { el(id).style.opacity = o; }
+  function drawIntro(t, acc) {
+    var on = t < 5; el("intro").style.display = on ? "" : "none"; if (!on) return;
+    var ds = el("i-row").children, i;
+    for (i = 0; i < 7; i++) {
+      var a = t - (.25 + i * .25), dot = ds[i].firstChild;
+      ds[i].style.opacity = a < 0 ? 0 : 1;
+      dot.style.transform = "scale(" + (a < 0 ? 0 : a < .12 ? 1.4 : 1) + ")";
+      dot.style.background = i === 3 ? acc : t > 2.0 + i * .06 && i < 3 ? "#EEEDE9" : a < .12 && a >= 0 ? "#EEEDE9" : "#2A2A29";
+    }
+    el("i-wkl").textContent = typed("WEEK 44 · THURSDAY", t, .1);
+    var gone = t >= 3.5;
+    el("i-wk").style.opacity = gone ? 0 : 1;
+    lineIn(el("i-h1"), t, 2.0, 3.35, 0); lineIn(el("i-h2"), t, 2.5, 3.35, 0);
+    var w = el("i-wd"); w.style.opacity = t >= 3.5 ? 1 : 0;
+    var wa = t - 3.5;
+    w.firstChild.style.letterSpacing = (wa < 0 ? .3 : .3 * (1 - eout(wa / .5))) + "em";
+    w.firstChild.style.clipPath = "inset(0 " + (wa < 0 ? 100 : 100 * (1 - eout(wa / .35))) + "% 0 0)";
+    el("i-sub").textContent = typed("A WEEK BASED TODO APP", t, 3.75);
+    w.style.transform = "translateY(" + (-130 * eio((t - 4.0) / .8)) + "px)";
+    w.style.opacity = t > 4.5 ? 1 - clamp((t - 4.5) / .3) : w.style.opacity;
+  }
+  function drawEnd(t, acc) {
+    var on = t >= 41.9; el("end").style.display = on ? "" : "none"; if (!on) return;
+    var a = t - 42.0, wd = el("e-wd");
+    wd.style.clipPath = "inset(0 " + (a < 0 ? 100 : 100 * (1 - eout(a / .4))) + "% 0 0)";
+    wd.style.letterSpacing = (a < 0 ? .3 : .3 * (1 - eout(a / .6))) + "em";
+    lineIn(el("e-h1"), t, 42.5, null, 0); lineIn(el("e-h2"), t, 43.0, null, 0);
+    var ds = el("e-row").children;
+    for (var i = 0; i < 7; i++) {
+      var b = t - (43.5 + i * .125), dot = ds[i].firstChild;
+      ds[i].style.opacity = t < 42.25 + i * .05 ? 0 : 1;
+      dot.style.background = b >= 0 ? acc : "#2A2A29";
+      dot.style.transform = "scale(" + (b >= 0 && b < .1 ? 1.35 : 1) + ")";
+    }
+    el("e-sub").textContent = typed("NO SIGN UP · FREE · RUNS IN YOUR BROWSER", t, 44.5);
+  }
+
+  /* ---------- one frame ---------- */
+  window.render = function (t, fdt) {
+    syncAnims(fdt * 1000);
+    var cs = win().getComputedStyle(doc().documentElement), acc = cs.getPropertyValue("--accent").trim() || "#FF4A1C";
+    if (acc.toUpperCase() === "#1B1B1A") acc = "#EEEDE9"; // mono accent in light theme is black, show it white on the dark stage
+    document.documentElement.style.setProperty("--acc", acc);
+    var c = camAt(t);
+    cam.style.transform = "translate(" + (c.ax - c.cx * c.s) + "px," + (c.ay - c.cy * c.s) + "px) scale(" + c.s + ")";
+    el("band").style.opacity = t > 4.6 && t < 41.5 ? 1 : 0;
+    drawDots(t, c, acc); drawRings(t, c, acc); drawCap(t); drawIntro(t, acc); drawEnd(t, acc);
+    el("cr").innerHTML = t < 41.9 ? "WK 44 · " + (t < 5 ? "2026" : "THU 29 OCT") : "WK 44 · 2026";
+    return true;
+  };
+  window.ready = function () {
+    var d = doc(); if (!d || d.readyState !== "complete" || !q("#s-welcome")) return false;
+    return document.fonts.status === "loaded" && d.fonts.status === "loaded";
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+node_modules/
+out/*.jpg
+out/stills/
+out/preview.mp4
+out/*.raw.wav
+err.txt
+o.txt

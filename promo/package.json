@@ -1,0 +1,13 @@
+{
+  "name": "veckolista-promo",
+  "private": true,
+  "description": "Renders the Veckolista launch film from the real app",
+  "scripts": {
+    "preview": "node render.js --preview",
+    "render": "node render.js"
+  },
+  "devDependencies": {
+    "ffmpeg-static": "5.2.0",
+    "playwright-core": "1.49.1"
+  }
+}
