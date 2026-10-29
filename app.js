@@ -180,7 +180,7 @@
     "ALLT SPARAS BARA PÅ DEN HÄR ENHETEN": "SAVED ON THIS DEVICE ONLY", "SKRIV DITT NAMN FÖRST": "TYPE YOUR NAME FIRST",
     "Ditt namn": "Your name", "Kom igång": "Get started", "Tillbaka": "Back", "Figur som rör sig. Tryck för nästa": "Moving figure. Tap for the next one",
     "GOD NATT": "GOOD NIGHT", "GOD MORGON": "GOOD MORNING", "GOD DAG": "GOOD AFTERNOON", "GOD KVÄLL": "GOOD EVENING",
-    "DAGENS CITAT": "QUOTE OF THE DAY", "Föregående citat": "Previous quote", "Nästa citat": "Next quote", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
+    "DAGENS CITAT": "QUOTE OF THE DAY", "KOMMANDE": "COMING UP", "NÄSTA: INGET PLANERAT": "NEXT: NONE", "Kommande": "Coming up", "VISA HELA VECKAN": "SHOW THE WHOLE WEEK", "I MORGON": "TOMORROW", "Föregående citat": "Previous quote", "Nästa citat": "Next quote", "PLANERA DAGEN": "PLAN THE DAY", "ALLT KLART": "ALL DONE", "ALLT": "ALL", "KLART": "DONE",
     "MED PÅMINNELSE": "WITH REMINDER", "PÅMINNELSER AV": "REMINDERS OFF", "INGET MER": "NOTHING MORE", "INGET PLANERAT": "NOTHING PLANNED",
     "NJUT AV DAGEN": "ENJOY THE DAY", "INGET ÄNNU": "NOTHING YET", "ÄNNU INGEN TID": "NO TIME YET", "TID = PÅMINNELSE": "TIME = REMINDER",
     "INGEN SERIE ÄNNU": "NO STREAK YET", "DIN FÖRSTA VECKA BÖRJAR HÄR": "YOUR FIRST WEEK STARTS HERE", "NÄSTA VECKA": "NEXT WEEK", "PLANERA I FÖRTID": "PLAN AHEAD",
@@ -442,23 +442,47 @@
     } else { a = "INGET ÄNNU"; b = "ÄNNU INGEN TID"; c = "TID = PÅMINNELSE"; }
     $("o-n1").toggleAttribute("data-notr", !!nx); $("o-n1").textContent = a; $("o-n2").textContent = b; $("o-n3").textContent = c;
 
-    var tot = 0, tdn = 0, mh = "", streak = 0, dates = [];
+    /* kommande: the week as a 24-dot meter, then the next days you can act on */
+    var tot = 0, tdn = 0, streak = 0, dates = [], NB = 24, fill, bh = "", uh = "", shown = 0;
     for (i = 0; i < 7; i++) {
-      var d = addDays(ms, i), k = key(d), wt = list(k), wd = wt.filter(function (t) { return t.d; }).length, isT = k === nk;
-      tot += wt.length; tdn += wd; dates.push(wt);
-      var dh = "";
-      if (!wt.length) dh = '<i class="dot ring"></i>';
-      else dh = dotsHtml(wt, function (t) { return "dot" + (t.d ? " done" : ""); }) + (wt.length > MAXDOTS ? '<span class="more">+' + (wt.length - MAXDOTS) + "</span>" : "");
-      mh += '<span class="mcol' + (isT ? " today" : "") + '"><span class="l">' + LET[i] + "</span>" + dh + "</span>";
+      var wt = list(key(addDays(ms, i)));
+      tot += wt.length; tdn += wt.filter(function (t) { return t.d; }).length; dates.push(wt);
     }
-    $("o-matrix").innerHTML = mh;
-    $("o-wsum").textContent = tdn + " / " + tot + " KLARA";
+    fill = tot ? Math.round(tdn / tot * NB) : 0;
+    for (i = 0; i < NB; i++) bh += '<i class="' + (i < fill ? "on" : "") + '"></i>';
+    $("o-wbar").innerHTML = bh;
+    $("o-wsum").textContent = tdn + " / " + tot + " KLARA · V" + isoWeek(now);
+    var upTo = idx < 6 ? 6 - idx : 3, more = 0;
+    for (i = 1; i <= upTo; i++) {
+      var dd = addDays(now, i), dk = key(dd), ts = list(dk), left = ts.filter(function (t) { return !t.d; }), di = (dd.getDay() + 6) % 7;
+      if (shown === 4) { more++; continue; }
+      var first = sorted(left)[0], sub = dd.getDate() + " " + MON[dd.getMonth()] + (i === 1 ? " · I MORGON" : "");
+      var dots = ""; ts.slice(0, 5).forEach(function (t) { dots += '<i class="' + (t.d ? "on" : "") + '"></i>'; });
+      if (ts.length > 5) dots += '<em>+' + (ts.length - 5) + "</em>";
+      uh += '<li><button type="button" class="up-r" data-up="' + dk + '" aria-label="' + DAYS[di] + " " + sub + '">' +
+        '<span class="up-d"><b>' + DAYS[di] + '</b><span>' + sub + '</span></span>' +
+        '<span class="up-t">' + (first ? '<span data-notr>' + (first.time ? first.time + " " : "") + esc(first.t) + "</span>" : "INGET PLANERAT") + '</span>' +
+        '<span class="up-n">' + (ts.length ? dots : '<span class="up-add" aria-hidden="true">+</span>') + "</span></button></li>";
+      shown++;
+    }
+    if (idx === 6) uh = '<li class="up-h">NÄSTA VECKA</li>' + uh;
+    if (more) uh += '<li><button type="button" class="up-r up-more" data-up="plan"><span class="up-d"><b>+' + more + '</b><span>VISA HELA VECKAN</span></span><span class="up-n"><span aria-hidden="true">→</span></span></button></li>';
+    $("o-up").innerHTML = uh;
     for (i = idx; i >= 0; i--) {
       var w = dates[i], full = w.length && w.every(function (t) { return t.d; });
       if (full) streak++; else if (i !== idx) break;
     }
-    $("o-streak").textContent = streak ? "SERIE: " + streak + (streak === 1 ? " DAG" : " DAGAR") : "INGEN SERIE ÄNNU";
+    $("o-streak").hidden = !streak;
+    $("o-streak").textContent = "SERIE: " + streak + (streak === 1 ? " DAG" : " DAGAR");
   }
+  /* a tap on a coming day: Plan on that day if it has tasks, Lägg till for that day if it is empty */
+  $("o-up").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-up]"); if (!b) return;
+    var k = b.getAttribute("data-up");
+    if (k === "plan") { goPlanToday(false); return; }
+    if (!list(k).length) { openAdd(k, "over"); return; }
+    todayKey = key(new Date()); weekStart = mondayOf(fromKey(k)); openKey = k; setTab("plan"); scrollOpenDay();
+  });
   function goPlanToday(addFocus) {
     var now = new Date(); todayKey = key(now); weekStart = mondayOf(now); openKey = todayKey;
     if (addFocus) focusKey = todayKey;
@@ -1097,7 +1121,6 @@
   function closeCal() { cal.hidden = true; $("wkbtn").focus(); }
   $("wkbtn").onclick = openCal;
   $("o-wk").onclick = openCal;
-  $("o-matrix").onclick = openCal;
   $("calclose").onclick = closeCal;
   $("caltoday").onclick = function () { todayKey = key(new Date()); setWeek(mondayOf(new Date())); closeCal(); if (tab === "over") setTab("plan"); };
   $("calprev").onclick = function () { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCal(); };
