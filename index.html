@@ -19,20 +19,25 @@
 
 <!-- Välkommen -->
 <main class="app col wel screen" id="s-welcome" hidden>
-  <div class="bar"><span class="sp"></span><button class="pill themebtn" aria-label="Byt tema">AUTO</button></div>
-  <div class="lblv">VECKA</div>
-  <div class="big" id="wl-num" style="margin-top:6px">00</div>
-  <div class="dots" id="wl-dots" aria-hidden="true"></div>
-  <h1>Veckolista</h1>
-  <p>Planera varje vecka. En dag i taget.</p>
-  <form class="acts" id="f-name" novalidate>
-    <div class="form namecard">
-      <label class="fld" id="wl-f"><span class="fl">SKRIV DITT NAMN</span><input id="wl-name" type="text" autocomplete="given-name" autocapitalize="words" placeholder="Förnamn" maxlength="40" enterkeyhint="go"></label>
+  <div class="bar"><span class="lblv" id="wl-wk">VECKA 44</span><span class="sp"></span><button class="pill themebtn" aria-label="Byt tema">AUTO</button></div>
+  <div class="wel-in">
+    <div class="wel-hero">
+      <button class="dancer" id="wl-dance" type="button" aria-label="Dansande figur. Tryck för nästa steg"><canvas id="wl-dance-c" aria-hidden="true"></canvas></button>
     </div>
-    <div class="err" id="wl-err" role="alert"></div>
-    <button class="btn pri" type="submit">KOM IGÅNG <span aria-hidden="true">→</span></button>
-    <p class="wl-note">ALLT SPARAS BARA PÅ DEN HÄR ENHETEN</p>
-  </form>
+    <div class="wel-main">
+      <h1>Veckolista<i aria-hidden="true">.</i></h1>
+      <p>Planera veckan. En dag i taget.</p>
+      <form class="namebox" id="f-name" novalidate>
+        <label class="nb-l" for="wl-name">VAD HETER DU?</label>
+        <div class="nb-row" id="wl-f">
+          <input id="wl-name" type="text" autocomplete="given-name" autocapitalize="words" placeholder="Ditt namn" maxlength="40" enterkeyhint="go">
+          <button class="nb-go" type="submit" aria-label="Kom igång">→</button>
+        </div>
+      </form>
+      <div class="err" id="wl-err" role="alert"></div>
+      <p class="wl-note">ALLT SPARAS BARA PÅ DEN HÄR ENHETEN</p>
+    </div>
+  </div>
 </main>
 
 <!-- Logga in -->

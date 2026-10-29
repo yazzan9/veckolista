@@ -123,6 +123,7 @@
     Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) { b.textContent = label; b.setAttribute("aria-label", "Tema: " + label.toLowerCase() + ". Tryck för att byta"); });
     if (!$("settings").hidden) renderSettings();
     figColors(); if (fig && !$("s-over").hidden) figStart();
+    if (dance && !$("s-welcome").hidden) danceStart();
   }
   if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", applyTheme);
   Array.prototype.forEach.call(document.querySelectorAll(".themebtn"), function (b) {
@@ -139,7 +140,8 @@
   function applyView() {
     var home = document.body.classList.contains("home");
     document.body.classList.toggle("desk", isDesk());
-    $("viewsw").hidden = !(home && wideMq && wideMq.matches);
+    $("viewsw").hidden = !(wideMq && wideMq.matches);
+    if (!home && !$("s-welcome").hidden) danceStart();
     Array.prototype.forEach.call(document.querySelectorAll("[data-view]"), function (b) {
       var on = b.getAttribute("data-view") === (settings.view === "phone" ? "phone" : "desk");
       b.classList.toggle("on", on); b.setAttribute("aria-checked", on);
@@ -289,11 +291,79 @@
   $("wl-name").addEventListener("input", function () { $("wl-err").textContent = ""; $("wl-f").classList.remove("bad"); });
 
   function renderWelcome() {
-    var t = new Date(), idx = (t.getDay() + 6) % 7, h = "";
-    $("wl-num").textContent = pad(isoWeek(t));
-    for (var i = 0; i < 7; i++) h += '<i class="' + (i < idx ? "on" : i === idx ? "now" : "") + '"></i>';
-    $("wl-dots").innerHTML = h;
+    $("wl-wk").textContent = "VECKA " + isoWeek(new Date());
+    danceStart();
   }
+
+  /* ---------- welcome dancer: a dot-matrix figure dancing to 120 bpm ----------
+     each pose is a skeleton (neck, hip, elbows, hands, knees, feet in grid units on a 15x17 grid).
+     joints ease into the next pose on every beat and snap to the dots, so it moves fluid but mechanical.
+     orange hands; a floor of dots under the feet ripples outwards on each beat. Tap = skip to the next move. */
+  var DW = 15, DH = 17, BEAT = 500;
+  var DPOSE = {
+    stand: { n: [7, 5], h: [7, 9.5], le: [5, 7], lh: [4.6, 9.6], re: [9, 7], rh: [9.4, 9.6], lk: [6, 12.5], lf: [5.6, 15.4], rk: [8, 12.5], rf: [8.4, 15.4] },
+    point: { n: [7.3, 5], h: [7.5, 9.5], le: [5.4, 7.4], lh: [6, 9.4], re: [9.6, 3.4], rh: [12, 1.2], lk: [6.2, 12.4], lf: [5.6, 15.4], rk: [9, 12], rf: [9.6, 15.4] },
+    down: { n: [6.7, 5.2], h: [6.6, 9.6], le: [8.6, 7.4], lh: [8.2, 9.4], re: [4.6, 7.6], rh: [2.4, 10.4], lk: [5.4, 12.3], lf: [4.6, 15.4], rk: [7.4, 12.6], rf: [7.8, 15.4] },
+    vup: { n: [7, 4], h: [7, 8.4], le: [4.6, 2.6], lh: [3, 0.6], re: [9.4, 2.6], rh: [11, 0.6], lk: [6, 11.4], lf: [5.8, 14.2], rk: [8, 11.4], rf: [8.2, 14.2] },
+    squat: { n: [7, 6.4], h: [7, 10.6], le: [4.4, 7.6], lh: [2.8, 6.2], re: [9.6, 7.6], rh: [11.2, 6.2], lk: [4.4, 12.6], lf: [4.2, 15.4], rk: [9.6, 12.6], rf: [9.8, 15.4] },
+    robot: { n: [7, 5], h: [7, 9.5], le: [4, 5.4], lh: [4, 2.8], re: [10, 5.4], rh: [10, 8], lk: [6, 12.5], lf: [5.6, 15.4], rk: [8, 12.5], rf: [8.4, 15.4] },
+    kick: { n: [7.4, 5], h: [7.6, 9.5], le: [5.2, 6.6], lh: [3.6, 4.6], re: [9.8, 6.6], rh: [11.4, 4.6], lk: [5.4, 11.4], lf: [3, 12.4], rk: [8, 12.5], rf: [8.4, 15.4] }
+  };
+  function dMirror(p) {
+    var m = {}, sw = { le: "re", lh: "rh", re: "le", rh: "lh", lk: "rk", lf: "rf", rk: "lk", rf: "lf", n: "n", h: "h" };
+    for (var k in p) m[sw[k]] = [DW - 1 - p[k][0], p[k][1]];
+    return m;
+  }
+  DPOSE.robot2 = dMirror(DPOSE.robot); DPOSE.kick2 = dMirror(DPOSE.kick); DPOSE.point2 = dMirror(DPOSE.point); DPOSE.down2 = dMirror(DPOSE.down);
+  var DROUTINE = ["point", "down", "point", "down", "vup", "squat", "vup", "squat", "robot", "robot2", "robot", "robot2", "kick", "kick2", "kick", "kick2", "point2", "down2", "point2", "down2"];
+  var dance = { raf: 0, off: 0, last: "" };
+  function dJoints(t) {
+    var b = Math.floor(t / BEAT) + dance.off, p = (t % BEAT) / BEAT, n = DROUTINE.length;
+    var A = DPOSE[DROUTINE[((b - 1) % n + n) % n]], B = DPOSE[DROUTINE[(b % n + n) % n]], k = Math.min(1, p / 0.35), e = 1 - Math.pow(1 - k, 3), J = {};
+    for (var j in B) J[j] = [A[j][0] + (B[j][0] - A[j][0]) * e, A[j][1] + (B[j][1] - A[j][1]) * e];
+    return { J: J, p: p };
+  }
+  function dFrame(t) {
+    var g = new Uint8Array(DW * DH), r = dJoints(t), J = r.J, x, y, R = Math.round;
+    function put(px, py, v) { if (px >= 0 && py >= 0 && px < DW && py < DH && g[py * DW + px] < v) g[py * DW + px] = v; }
+    function seg(a, b) {
+      var x0 = R(a[0]), y0 = R(a[1]), x1 = R(b[0]), y1 = R(b[1]), dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, er = dx + dy;
+      for (;;) { put(x0, y0, 2); if (x0 === x1 && y0 === y1) return; var e2 = 2 * er; if (e2 >= dy) { er += dy; x0 += sx; } if (e2 <= dx) { er += dx; y0 += sy; } }
+    }
+    for (x = 0; x < DW; x++) put(x, DH - 1, 1);
+    var hx = R(J.n[0] + (J.n[0] - J.h[0]) * 0.4), hy = R(J.n[1]) - 2;
+    for (y = -1; y <= 1; y++) for (x = -1; x <= 1; x++) put(hx + x, hy + y, 2);
+    seg(J.n, J.h); seg(J.n, J.le); seg(J.le, J.lh); seg(J.n, J.re); seg(J.re, J.rh);
+    seg(J.h, J.lk); seg(J.lk, J.lf); seg(J.h, J.rk); seg(J.rk, J.rf);
+    put(R(J.lh[0]), R(J.lh[1]), 3); put(R(J.rh[0]), R(J.rh[1]), 3);
+    if (!figReduced() && r.p < 0.55) {
+      var cx = (J.lf[0] + J.rf[0]) / 2, front = r.p * 14;
+      for (x = 0; x < DW; x++) { var d = Math.abs(x - cx); if (Math.abs(d - front) < 0.8) put(x, DH - 1, 3); else if (d < front) put(x, DH - 1, 2); }
+    }
+    return g;
+  }
+  function dDraw(g) {
+    var k = g.join(""); if (k === dance.last) return; dance.last = k;
+    var cv = $("wl-dance-c"), W = cv.clientWidth, pitch = W / DW, H = pitch * DH, dpr = window.devicePixelRatio || 1, ctx, i, x, y, rad = pitch * 0.36;
+    if (!W) return;
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    for (i = 1; i <= 3; i++) {
+      ctx.fillStyle = fig.col[i - 1]; ctx.beginPath();
+      for (y = 0; y < DH; y++) for (x = 0; x < DW; x++) if (g[y * DW + x] === i) { ctx.moveTo(pitch * (x + 0.5) + rad, pitch * (y + 0.5)); ctx.arc(pitch * (x + 0.5), pitch * (y + 0.5), rad, 0, 2 * Math.PI); }
+      ctx.fill();
+    }
+  }
+  function danceLoop(now) {
+    dance.raf = 0;
+    if ($("s-welcome").hidden || document.hidden) return;
+    dDraw(dFrame(figReduced() ? BEAT * 0.9 : now));
+    if (!figReduced()) dance.raf = requestAnimationFrame(danceLoop);
+  }
+  function danceStart() { figColors(); dance.last = ""; if (!dance.raf) dance.raf = requestAnimationFrame(danceLoop); }
+  $("wl-dance").onclick = function () { dance.off += 4 - (Math.floor(performance.now() / BEAT) + dance.off) % 4; buzz(6); danceStart(); };
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && !$("s-welcome").hidden) danceStart(); });
+  window.addEventListener("resize", function () { if (!$("s-welcome").hidden) { dance.last = ""; danceStart(); } });
 
   /* ---------- auth ---------- */
   Array.prototype.forEach.call(document.querySelectorAll("[data-show]"), function (b) {
