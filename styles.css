@@ -71,6 +71,10 @@ input:focus-visible { border-radius: 4px; }
 .wel h1 { font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; margin: 30px 0 10px; text-transform: uppercase; letter-spacing: .005em; }
 .wel p { margin: 0; color: var(--mute); font-size: 13px; }
 .acts { margin-top: auto; padding-top: 32px; display: flex; flex-direction: column; gap: 12px; }
+.namecard { margin-top: 0; padding: 20px 20px 18px; }
+.namecard .fld input { font-family: var(--f-display); font-weight: 800; font-size: 34px; text-transform: uppercase; letter-spacing: .005em; padding: 4px 0 0; }
+#f-name .err { margin: 0 2px; min-height: 14px; }
+.wl-note { margin: 2px 0 0; text-align: center; font-size: 10px; letter-spacing: .14em; color: var(--mute); }
 .ttl { font-family: var(--f-display); font-weight: 800; font-size: 56px; line-height: 1; text-transform: uppercase; margin: 28px 0 6px; letter-spacing: .005em; }
 .sub { font-size: 11px; letter-spacing: .12em; color: var(--mute); }
 .form { background: var(--surface); border-radius: 28px; padding: 22px 20px 24px; margin-top: 22px; display: flex; flex-direction: column; gap: 22px; }

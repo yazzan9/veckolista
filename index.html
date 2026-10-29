@@ -20,10 +20,14 @@
   <div class="dots" id="wl-dots" aria-hidden="true"></div>
   <h1>Veckolista</h1>
   <p>Planera varje vecka. En dag i taget.</p>
-  <div class="acts">
-    <button class="btn pri" id="wl-login">Logga in <span aria-hidden="true">→</span></button>
-    <button class="btn out" id="wl-signup">Skapa konto</button>
-  </div>
+  <form class="acts" id="f-name" novalidate>
+    <div class="form namecard">
+      <label class="fld" id="wl-f"><span class="fl">SKRIV DITT NAMN</span><input id="wl-name" type="text" autocomplete="given-name" autocapitalize="words" placeholder="Förnamn" maxlength="40" enterkeyhint="go"></label>
+    </div>
+    <div class="err" id="wl-err" role="alert"></div>
+    <button class="btn pri" type="submit">KOM IGÅNG <span aria-hidden="true">→</span></button>
+    <p class="wl-note">ALLT SPARAS BARA PÅ DEN HÄR ENHETEN</p>
+  </form>
 </main>
 
 <!-- Logga in -->

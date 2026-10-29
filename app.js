@@ -255,8 +255,18 @@
   });
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-go]"), function (b) { b.onclick = function () { show(b.getAttribute("data-go")); }; });
-  $("wl-login").onclick = function () { show("login"); };
-  $("wl-signup").onclick = function () { show("signup"); };
+  /* first version: no login, just a name. Same name on the same device opens the same list. */
+  $("f-name").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var nm = $("wl-name").value.trim().replace(/\s+/g, " ");
+    if (!nm) { $("wl-err").textContent = "SKRIV DITT NAMN FÖRST"; $("wl-f").classList.add("bad"); $("wl-name").focus(); return; }
+    var id = "namn:" + nm.toLowerCase();
+    if (!state.users[id]) state.users[id] = { name: nm, tasks: {} };
+    state.session = id; save();
+    $("wl-name").value = ""; $("wl-err").textContent = ""; $("wl-f").classList.remove("bad");
+    show("home");
+  });
+  $("wl-name").addEventListener("input", function () { $("wl-err").textContent = ""; $("wl-f").classList.remove("bad"); });
 
   function renderWelcome() {
     var t = new Date(), idx = (t.getDay() + 6) % 7, h = "";
