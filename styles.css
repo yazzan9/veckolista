@@ -582,6 +582,16 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
   .ov:not(.full) > .sheet .grab { display: none; }
 }
 
+/* cheer pill after each finished task */
+.cheer { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 61; width: min(350px, calc(100% - 40px)); display: flex; align-items: center; gap: 12px; padding: 4px 22px 4px 12px; border-radius: 26px; background: var(--fg); color: var(--bg); }
+.cheer[hidden] { display: none; }
+.cheer.in { animation: cheerin .32s cubic-bezier(.2, .9, .3, 1.3); }
+@keyframes cheerin { from { transform: translate(-50%, 24px); opacity: 0; } }
+.cheer canvas { width: 60px; height: 68px; flex: none; }
+.ch-t b { display: block; font-family: var(--f-display); font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: .005em; }
+.ch-t span { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .14em; opacity: .7; }
+@media (min-width: 900px) { body.desk .cheer { bottom: 28px; } }
+
 /* allt klart */
 .party { position: fixed; inset: 0; z-index: 70; cursor: pointer; transition: opacity .3s; }
 .party.out { opacity: 0; }

@@ -189,7 +189,7 @@
     "Lägg till en uppgift...": "Add a task...", "Första uppgiften...": "Your first task...", "↑ BÖRJA HÄR. KLOCKAN = PÅMINNELSE": "↑ START HERE. CLOCK = REMINDER",
     "RENSA KLARA": "CLEAR DONE", "SKRIVSKYDDAD": "READ ONLY", "VECKAN ÄR AVSLUTAD": "THE WEEK IS OVER", "AVSLUTAD": "FINISHED", "TOM VECKA": "EMPTY WEEK",
     "NY UPPGIFT": "NEW TASK", "LÄGG TILL": "ADD", "TILLAGD": "ADDED", "INGA UPPGIFTER ÄNNU": "NO TASKS YET", "Vad ska göras?": "What needs doing?", "Ny uppgift": "New task", "Välj dag": "Pick a day",
-    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "TRYCK PÅ SIFFRORNA": "TAP THE NUMBERS", "TIMME": "HOUR", "MINUT": "MINUTE", "Välj timme": "Pick the hour", "Välj minut": "Pick the minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
+    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "TRYCK PÅ SIFFRORNA": "TAP THE NUMBERS", "SNYGGT!": "NICE!", "BRA JOBBAT!": "GOOD JOB!", "EN MINDRE!": "ONE LESS!", "TOPPEN!": "GREAT!", "KLART!": "DONE!", "TIMME": "HOUR", "MINUT": "MINUTE", "Välj timme": "Pick the hour", "Välj minut": "Pick the minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
     "Välj tid": "Pick a time", "Tid": "Time", "En timme senare": "One hour later", "En timme tidigare": "One hour earlier", "Fem minuter senare": "Five minutes later", "Fem minuter tidigare": "Five minutes earlier",
     "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MARKERA SOM KLAR": "MARK AS DONE",
     "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",
@@ -208,7 +208,7 @@
   var EN_PAT = [
     [/^(\d+) MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG$/, "$1 MISSED · TAP → TO MOVE TO TODAY"],
     [/^FLYTTAR UPPGIFTEN TILL (.+)\. DEN FÖRSVINNER FRÅN (.+)\.$/, function (m, a, b) { return "MOVES THE TASK TO " + tr(a) + ". IT DISAPPEARS FROM " + tr(b) + "."; }],
-    [/^(\d+) UPPGIFT$/, "$1 TASK"], [/^(\d+) UPPGIFTER$/, "$1 TASKS"], [/^(\d+) MISSADE$/, "$1 MISSED"], [/^(\d+) KVAR$/, "$1 LEFT"],
+    [/^(\d+) UPPGIFT$/, "$1 TASK"], [/^(\d+) UPPGIFTER$/, "$1 TASKS"], [/^(\d+) MISSADE$/, "$1 MISSED"], [/^(\d+) KVAR$/, "$1 LEFT"], [/^(\d+) KVAR IDAG$/, "$1 LEFT TODAY"],
     [/^\/ (\d+) KLARA$/, "/ $1 DONE"], [/^(\d+) \/ (\d+) KLARA$/, "$1 / $2 DONE"], [/^(\d+) KLARA RENSADE$/, "$1 DONE CLEARED"], [/^(\d+) KLAR RENSAD$/, "$1 DONE CLEARED"],
     [/^SERIE: (\d+) DAG$/, "STREAK: $1 DAY"], [/^SERIE: (\d+) DAGAR$/, "STREAK: $1 DAYS"], [/^OM (\d+) VECKOR$/, "IN $1 WEEKS"], [/^VECKA (\d+)$/, "WEEK $1"],
     [/^VALD: VECKA (\d+)$/, "SELECTED: WEEK $1"], [/^Vecka (\d+)$/, "Week $1"], [/^HEJ (.+)$/, "HI $1"], [/^NÄSTA: (.+)$/, function (m, a) { return "NEXT: " + tr(a); }],
@@ -503,6 +503,8 @@
     point: { n: [7.3, 5], h: [7.5, 9.5], le: [5.4, 7.4], lh: [6, 9.4], re: [9.6, 3.4], rh: [12, 1.2], lk: [6.2, 12.4], lf: [5.6, 15.4], rk: [9, 12], rf: [9.6, 15.4] },
     down: { n: [6.7, 5.2], h: [6.6, 9.6], le: [8.6, 7.4], lh: [8.2, 9.4], re: [4.6, 7.6], rh: [2.4, 10.4], lk: [5.4, 12.3], lf: [4.6, 15.4], rk: [7.4, 12.6], rf: [7.8, 15.4] },
     robot: { n: [7, 5], h: [7, 9.5], le: [4, 5.4], lh: [4, 2.8], re: [10, 5.4], rh: [10, 8], lk: [6, 12.5], lf: [5.6, 15.4], rk: [8, 12.5], rf: [8.4, 15.4] },
+    vup: { n: [7, 4], h: [7, 8.4], le: [4.6, 2.6], lh: [3, 0.6], re: [9.4, 2.6], rh: [11, 0.6], lk: [6, 11.4], lf: [5.8, 14.2], rk: [8, 11.4], rf: [8.2, 14.2] },
+    squat: { n: [7, 6.4], h: [7, 10.6], le: [4.4, 7.6], lh: [2.8, 6.2], re: [9.6, 7.6], rh: [11.2, 6.2], lk: [4.4, 12.6], lf: [4.2, 15.4], rk: [9.6, 12.6], rf: [9.8, 15.4] },
     run: { n: [7.2, 4.6], h: [7, 9], le: [5.8, 6.6], lh: [6.8, 8.2], re: [8.4, 7.4], rh: [9.6, 9.2], lk: [5.6, 10.6], lf: [6.4, 13], rk: [7.8, 12.2], rf: [8.4, 15.4] },
     star: { n: [7, 4.6], h: [7, 9], le: [4.6, 3.2], lh: [2.6, 1.4], re: [9.4, 3.2], rh: [11.4, 1.4], lk: [5.2, 12], lf: [3.6, 15], rk: [8.8, 12], rf: [10.4, 15] },
     shut: { n: [7, 5.4], h: [7, 10], le: [5.4, 7.6], lh: [5.6, 10], re: [8.6, 7.6], rh: [8.4, 10], lk: [6.4, 12.8], lf: [6.4, 15.4], rk: [7.6, 12.8], rf: [7.6, 15.4] },
@@ -525,31 +527,38 @@
     { ms: 6400, beat: 640, seq: ["star", "shut"] },
     { ms: 7200, beat: 1200, seq: ["reach", "bend", "reach", "bend2"] }
   ];
-  var DLOOP = DSCENES.reduce(function (s, c) { return s + c.ms; }, 0), dance = { raf: 0, off: 0, t0: 0, last: "" };
-  function dAt(t) {
-    var lt = ((t % DLOOP) + DLOOP) % DLOOP, base = t - lt, i = 0;
-    while (lt >= DSCENES[i].ms) { lt -= DSCENES[i].ms; base += DSCENES[i].ms; i++; }
-    var sc = DSCENES[i], step = Math.floor(lt / sc.beat);
+  var dance = { raf: 0, off: 0, t0: 0, last: "" };
+  /* scene lists loop; each scene has a length, a beat and a pose sequence */
+  function dAt(scenes, t) {
+    var loop = scenes.loop || (scenes.loop = scenes.reduce(function (s, c) { return s + c.ms; }, 0));
+    var lt = ((t % loop) + loop) % loop, base = t - lt, i = 0;
+    while (lt >= scenes[i].ms) { lt -= scenes[i].ms; base += scenes[i].ms; i++; }
+    var sc = scenes[i], step = Math.floor(lt / sc.beat);
     return { pose: DPOSE[sc.seq[step % sc.seq.length]], start: base + step * sc.beat, beat: sc.beat, end: base + sc.ms };
   }
-  function dJoints(t) {
-    var b = dAt(t), a = b.start <= 0 ? { pose: DPOSE.stand } : dAt(b.start - 1), p = (t - b.start) / b.beat, k = Math.min(1, p / 0.35), e = 1 - Math.pow(1 - k, 3), J = {};
+  function dJoints(scenes, t) {
+    var b = dAt(scenes, t), a = b.start <= 0 ? { pose: DPOSE.stand } : dAt(scenes, b.start - 1), p = (t - b.start) / b.beat, k = Math.min(1, p / 0.35), e = 1 - Math.pow(1 - k, 3), J = {};
     for (var j in b.pose) J[j] = [a.pose[j][0] + (b.pose[j][0] - a.pose[j][0]) * e, a.pose[j][1] + (b.pose[j][1] - a.pose[j][1]) * e];
     return { J: J, p: p };
   }
-  function dFrame(t) {
-    var C = DCOLS, ox = C - DW, g = new Uint8Array(C * DH), r = dJoints(t), J = r.J, x, y, R = Math.round;
-    function put(px, py, v) { px += ox; if (px >= 0 && py >= 0 && px < C && py < DH && g[py * C + px] < v) g[py * C + px] = v; }
+  /* draws the skeleton through put(x, y, level) in its own 15x17 grid units: body level 2, hands level 3 */
+  function dSkeleton(J, put) {
+    var R = Math.round, x, y;
     function seg(a, b) {
       var x0 = R(a[0]), y0 = R(a[1]), x1 = R(b[0]), y1 = R(b[1]), dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, er = dx + dy;
       for (;;) { put(x0, y0, 2); if (x0 === x1 && y0 === y1) return; var e2 = 2 * er; if (e2 >= dy) { er += dy; x0 += sx; } if (e2 <= dx) { er += dx; y0 += sy; } }
     }
-    for (x = -ox; x < DW; x++) put(x, DH - 1, 1);
     var hx = R(J.n[0] + (J.n[0] - J.h[0]) * 0.4), hy = R(J.n[1]) - 2;
     for (y = -1; y <= 1; y++) for (x = -1; x <= 1; x++) put(hx + x, hy + y, 2);
     seg(J.n, J.h); seg(J.n, J.le); seg(J.le, J.lh); seg(J.n, J.re); seg(J.re, J.rh);
     seg(J.h, J.lk); seg(J.lk, J.lf); seg(J.h, J.rk); seg(J.rk, J.rf);
     put(R(J.lh[0]), R(J.lh[1]), 3); put(R(J.rh[0]), R(J.rh[1]), 3);
+  }
+  function dFrame(t) {
+    var C = DCOLS, ox = C - DW, g = new Uint8Array(C * DH), r = dJoints(DSCENES, t), J = r.J, x;
+    function put(px, py, v) { px += ox; if (px >= 0 && py >= 0 && px < C && py < DH && g[py * C + px] < v) g[py * C + px] = v; }
+    for (x = -ox; x < DW; x++) put(x, DH - 1, 1);
+    dSkeleton(J, put);
     if (!figReduced() && r.p < 0.6) {
       var cx = (J.lf[0] + J.rf[0]) / 2, front = r.p * 22;
       for (x = -ox; x < DW; x++) { var d = Math.abs(x - cx); if (Math.abs(d - front) < 0.8) put(x, DH - 1, 3); else if (d < front && d > front - 5) put(x, DH - 1, 2); }
@@ -577,7 +586,7 @@
   }
   function danceStart(fresh) { figColors(); dance.last = ""; if (fresh) { dance.t0 = performance.now(); dance.off = 0; } if (!dance.raf) dance.raf = requestAnimationFrame(danceLoop); }
   $("wl-dance").onclick = function () {
-    var t = performance.now() - dance.t0 + dance.off, a = dAt(t);
+    var t = performance.now() - dance.t0 + dance.off, a = dAt(DSCENES, t);
     dance.off += a.end - t; buzz(6); danceStart();
   };
   document.addEventListener("visibilitychange", function () { if (!document.hidden && !$("s-welcome").hidden) danceStart(); });
@@ -801,6 +810,7 @@
       if (dayDone) flashKey = k2;
       if (arr[idx].d) buzz(dayDone ? [8, 70, 8, 70, 8] : 8);
       if (dayDone && k2 === key(new Date())) { var cb = btn.getBoundingClientRect(); celebrate(cb.left + cb.width / 2, cb.top + cb.height / 2, arr.length); }
+      else if (arr[idx].d) cheer(k2);
       save(); render();
       var nc = daysEl.querySelector('.task[data-id="' + id + '"] .chk'); if (nc) nc.focus({ preventScroll: true });
       return;
@@ -928,9 +938,10 @@
     if (ed.done && !t.d) pulseId = t.id;
     t.d = ed.done;
     if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
-    var tk = key(new Date()), finished = pulseId === t.id && ed.day === tk && list(tk).every(function (x) { return x.d; });
+    var tk = key(new Date()), doneNow = pulseId === t.id, day = ed.day, finished = doneNow && day === tk && list(tk).every(function (x) { return x.d; });
     save(); closeEdit(); render();
     if (finished) { buzz([8, 70, 8, 70, 8]); celebrate(innerWidth / 2, innerHeight / 2, list(tk).length); }
+    else if (doneNow) { buzz(8); cheer(day); }
   };
   $("ed-move").onclick = function () {
     var k = ed.k, id = ed.id, to = key(addDays(fromKey(ed.k), 1));
@@ -1222,51 +1233,49 @@
   };
 
   /* ---------- allt klart: a dot-matrix takeover when today's last task is done ----------
-     a ring of dots ripples out from the tapped checkbox (orange front, fg wake, dim field behind),
-     then a big check lights up dot by dot and ALLT KLART rises in. Tap anywhere to close. */
-  var party = { raf: 0, t0: 0, ox: 0, oy: 0, end: 0 };
-  var PP = 18, CHECK = [[-5, 0], [-2, 3], [5, -4]];
-  function checkDots() {
-    var pts = [], s, i, a, b, n;
-    for (s = 0; s < CHECK.length - 1; s++) {
-      a = CHECK[s]; b = CHECK[s + 1]; n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
-      for (i = s ? 1 : 0; i <= n; i++) pts.push([Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n)]);
-    }
-    return pts;
-  }
-  var CHECK_PTS = checkDots();
+     a ring of dots ripples out from the tapped checkbox (orange front, fg wake, dim field behind), then the
+     dancer from the start screen does a victory dance on a dot floor while dot confetti rains down,
+     and ALLT KLART rises in under it. Tap anywhere to close. */
+  var party = { raf: 0, t0: 0, ox: 0, oy: 0, end: 0, conf: [] };
+  var PP = 18, PARTY_SCENES = [{ ms: 1e9, beat: 380, seq: ["vup", "squat", "vup", "squat", "point", "down", "point2", "down2", "star", "shut", "star", "shut"] }];
   function partyDraw(t) {
     var cv = $("party-c"), dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight, ctx = cv.getContext("2d");
     var col = fig.col || [], cols = Math.ceil(W / PP) + 1, rows = Math.ceil(H / PP) + 1, x0 = (W % PP) / 2, y0 = (H % PP) / 2;
-    var cx = Math.round((W / 2 - x0) / PP), cy = Math.round((H * 0.42 - y0) / PP), r = t * 1.5, paths = [[], [], []], i, j, d, k;
+    var cx = Math.round((W / 2 - x0) / PP), floor = Math.round((H * 0.56 - y0) / PP), r = t * 1.5, paths = [[], [], []], i, j, d, k;
+    function dot(gx, gy, lvl, rad) { paths[lvl].push(x0 + gx * PP, y0 + gy * PP, rad); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
     ctx.globalAlpha = Math.min(1, t / 260); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg"); ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
-      var px = x0 + i * PP, py = y0 + j * PP;
-      d = Math.hypot(px - party.ox, py - party.oy); k = r - d;
+      d = Math.hypot(x0 + i * PP - party.ox, y0 + j * PP - party.oy); k = r - d;
       if (k < 0) continue;
-      if (k < 36) paths[2].push(px, py, 3.4);
-      else if (k < 150) paths[1].push(px, py, 3.2 - (k - 36) / 114 * 1.2);
-      else paths[0].push(px, py, 2);
+      if (k < 36) dot(i, j, 2, 3.4); else if (k < 150) dot(i, j, 1, 3.2 - (k - 36) / 114 * 1.2); else dot(i, j, 0, 2);
     }
-    CHECK_PTS.forEach(function (p, n) {
-      var lt = t - 650 - n * 45; if (lt < 0) return;
-      var pop = lt < 160 ? 1 + 0.7 * Math.sin(lt / 160 * Math.PI) : 1;
-      paths[2].push(x0 + (cx + p[0]) * PP, y0 + (cy + p[1]) * PP, 6 * pop);
-    });
+    var dt = t - 550;
+    if (dt >= 0) {
+      var dj = dJoints(PARTY_SCENES, dt), pop = dt < 180 ? 0.6 + 0.4 * dt / 180 : 1, seen = {};
+      dSkeleton(dj.J, function (x, y, lvl) { var gx = cx - 7 + x, gy = floor - 16 + y, id = gx + "," + gy; if (seen[id] >= lvl) return; seen[id] = lvl; dot(gx, gy, lvl === 3 ? 2 : 1, (lvl === 3 ? 5 : 4.4) * pop); });
+      var fx = cx - 7 + (dj.J.lf[0] + dj.J.rf[0]) / 2, front = dj.p * 26;
+      for (i = cx - 13; i <= cx + 13; i++) { d = Math.abs(i - fx); dot(i, floor, Math.abs(d - front) < 0.8 && dj.p < 0.6 ? 2 : d < front && d > front - 6 && dj.p < 0.6 ? 1 : 0, 3.4); }
+      party.conf.forEach(function (c) {
+        var ct = dt - c.delay; if (ct < 0) return;
+        var gy = Math.round(c.row + ct * c.speed / 1000), gx = c.col + (Math.floor(ct / 260) % 2 ? c.sway : 0);
+        if (gy >= rows || (gx >= cx - 8 && gx <= cx + 8 && gy >= floor - 17 && gy <= floor)) return;
+        dot(gx, gy, c.lvl, c.lvl === 2 ? 3.6 : 2.6);
+      });
+    }
     for (k = 0; k < 3; k++) {
       if (!paths[k].length) continue;
       ctx.fillStyle = col[k] || "#888"; ctx.beginPath();
       for (i = 0; i < paths[k].length; i += 3) { ctx.moveTo(paths[k][i] + paths[k][i + 2], paths[k][i + 1]); ctx.arc(paths[k][i], paths[k][i + 1], paths[k][i + 2], 0, 2 * Math.PI); }
       ctx.fill();
     }
-    $("party-t").style.top = (y0 + (cy + 5) * PP) + "px";
-    if (t > 650 + CHECK_PTS.length * 45) $("party-t").classList.add("show");
+    $("party-t").style.top = (y0 + (floor + 2) * PP) + "px";
+    if (t > 900) $("party-t").classList.add("show");
   }
   function partyFrame(now) {
     var t = now - party.t0;
     partyDraw(t);
-    if (t > 3200) { endParty(); return; }
+    if (t > 4600) { endParty(); return; }
     party.raf = requestAnimationFrame(partyFrame);
   }
   function celebrate(ox, oy, n) {
@@ -1274,6 +1283,8 @@
     if (!fig.col) figColors();
     cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
     party.ox = ox; party.oy = oy; party.t0 = performance.now();
+    var gcols = Math.ceil(innerWidth / PP); party.conf = [];
+    for (var c = 0; c < Math.min(70, gcols * 2); c++) party.conf.push({ col: Math.floor(Math.random() * gcols), row: -Math.floor(Math.random() * 12), speed: 9 + Math.random() * 10, delay: 150 + Math.random() * 1600, sway: Math.random() < .5 ? -1 : 1, lvl: Math.random() < .45 ? 2 : 1 });
     $("party-s").textContent = "IDAG · " + n + " / " + n + " KLARA";
     $("party-t").classList.remove("show"); el.classList.remove("out"); el.hidden = false;
     cancelAnimationFrame(party.raf);
@@ -1287,6 +1298,32 @@
     party.end = setTimeout(function () { el.hidden = true; el.classList.remove("out"); }, 300);
   }
   $("party").onclick = endParty;
+
+  /* ---------- a small cheer for every finished task: a dot person jumps for joy in a pill above the tab bar ---------- */
+  var CHEERS = ["SNYGGT!", "BRA JOBBAT!", "EN MINDRE!", "TOPPEN!", "KLART!"], CHEER_SCENES = [{ ms: 1e9, beat: 300, seq: ["vup", "squat", "vup", "squat", "star", "shut"] }];
+  var cheerS = { raf: 0, t0: 0, end: 0, n: 0 };
+  function cheerDraw(t) {
+    var cv = $("cheer-c"), W = 60, H = 68, dpr = window.devicePixelRatio || 1, p = 4, ctx = cv.getContext("2d"), cs = getComputedStyle(document.documentElement), paths = { 2: [], 3: [] }, seen = {};
+    if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+    dSkeleton(dJoints(CHEER_SCENES, t).J, function (x, y, l) { var id = x + "," + y; if (seen[id] >= l) return; seen[id] = l; paths[l].push(x, y); });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    [[2, cs.getPropertyValue("--bg")], [3, cs.getPropertyValue("--accent")]].forEach(function (c) {
+      ctx.fillStyle = c[1]; ctx.beginPath();
+      for (var i = 0; i < paths[c[0]].length; i += 2) { var x = p * (paths[c[0]][i] + .5), y = p * (paths[c[0]][i + 1] + .5); ctx.moveTo(x + 1.6, y); ctx.arc(x, y, 1.6, 0, 2 * Math.PI); }
+      ctx.fill();
+    });
+  }
+  function cheerLoop(now) { cheerS.raf = 0; if ($("cheer").hidden) return; cheerDraw(now - cheerS.t0); cheerS.raf = requestAnimationFrame(cheerLoop); }
+  function cheer(k) {
+    var left = list(k).filter(function (x) { return !x.d; }).length, d = fromKey(k);
+    $("cheer-b").textContent = CHEERS[cheerS.n++ % CHEERS.length];
+    $("cheer-s").textContent = !left ? "ALLT KLART · " + DAYS[(d.getDay() + 6) % 7] : k === key(new Date()) ? left + " KVAR IDAG" : left + " KVAR · " + DAYS[(d.getDay() + 6) % 7];
+    $("undo").hidden = true; $("toast").hidden = true;
+    var el = $("cheer"); el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in");
+    cheerS.t0 = performance.now(); cancelAnimationFrame(cheerS.raf);
+    if (figReduced()) cheerDraw(150); else cheerS.raf = requestAnimationFrame(cheerLoop);
+    clearTimeout(cheerS.end); cheerS.end = setTimeout(function () { el.hidden = true; cancelAnimationFrame(cheerS.raf); }, 2200);
+  }
 
   /* ---------- keep "today" true when the app stays open past midnight ---------- */
   function tick() {
