@@ -246,9 +246,21 @@ ul.tasks { list-style: none; margin: 0; padding: 0; }
 .calhead span:first-child { text-align: left; padding-left: 8px; }
 .crow { width: 100%; padding: 5px 0; border-radius: 16px; text-align: center; }
 .crow:hover:not(.cur) { background: var(--surface); }
-.crow.cur { background: var(--surface); }
+/* the chosen week: a solid black band in light, gray in dark, with its dates and dots inverted */
+.crow.cur { background: var(--fg); color: var(--bg); }
+.crow.cur .cd.out b { color: var(--mute); opacity: .8; }
+.crow.cur .cd.has i { background: var(--bg); }
+.crow.cur .cd.has.alldone i { background: var(--mute); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .crow.cur { background: var(--mute); }
+  :root:not([data-theme="light"]) .crow.cur .cw, :root:not([data-theme="light"]) .crow.cur .cd.out b { color: var(--bg); opacity: .7; }
+  :root:not([data-theme="light"]) .crow.cur .cd.has.alldone i { background: var(--surface); }
+}
+:root[data-theme="dark"] .crow.cur { background: var(--mute); }
+:root[data-theme="dark"] .crow.cur .cw, :root[data-theme="dark"] .crow.cur .cd.out b { color: var(--bg); opacity: .7; }
+:root[data-theme="dark"] .crow.cur .cd.has.alldone i { background: var(--surface); }
 .cw { font-size: 11px; color: var(--mute); text-align: left; padding-left: 8px; letter-spacing: .06em; }
-.crow.cur .cw { color: var(--accent-ink); }
+.crow.cur .cw { color: var(--accent); }
 .cd { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
 .cd b { font-family: var(--f-display); font-weight: 800; font-size: 24px; line-height: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; }
 .cd.out b { color: var(--mute); opacity: .55; }
