@@ -1,4 +1,4 @@
-﻿/* Renders the film from the real app.
+/* Renders the film from the real app.
    node render.js --preview          540x675, 30 fps, quick check
    node render.js --stills 6,26.4    full-size key frames into out/stills
    node render.js                    1080x1350, 60 fps, plus the 1080x1080 cut
@@ -28,23 +28,33 @@ function serve() {
   return new Promise(r => srv.listen(0, "127.0.0.1", () => r(srv)));
 }
 
-/* demo data: Maya's week 44. Runs in every frame before any page script; only the app frame is touched. */
+/* demo data: Yazan's week 44. Runs in every frame before any page script; only the app frame is touched. */
 function initScript(seed) {
   if (location.pathname.indexOf("/promo/") === 0) return;
   let s = 20261029; Math.random = function () { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const sv = Element.prototype.scrollIntoView;
   Element.prototype.scrollIntoView = function (o) { return sv.call(this, o && typeof o === "object" ? Object.assign({}, o, { behavior: "auto" }) : o); };
+  // the second phone (#dash) shows the overview as it looks after the victory, in its own in-memory storage
+  const dash = location.hash === "#dash", id = "namn:" + seed.name.toLowerCase();
+  if (dash) {
+    const mem = {};
+    Storage.prototype.getItem = function (k) { return k in mem ? mem[k] : null; };
+    Storage.prototype.setItem = function (k, v) { mem[k] = String(v); };
+    Storage.prototype.removeItem = function (k) { delete mem[k]; };
+  }
   let n = 0; const T = (t, d, time) => Object.assign({ id: "demo" + (n++), t: t, d: d }, time ? { time: time } : {});
   const tasks = {
     "2026-10-26": [T("Plan the sprint", true, "09:00"), T("Gym", true, "18:00"), T("Call mom", true)],
     "2026-10-27": [T("Design review", true, "10:00"), T("Groceries", true), T("Read 20 pages", true), T("Water the plants", true)],
     "2026-10-28": [T("Run 5 km", true, "07:00"), T("Update portfolio", true)],
-    "2026-10-29": [T("Morning run", true, "07:30"), T("Send the deck to Lina", false, "11:00"), T("Book the dentist", false)],
+    "2026-10-29": dash ? [T("Morning run", true, "07:30"), T("Send the deck to Lina", true, "11:00"), T("Pick up film photos", true, "14:30"), T("Book the dentist", true)]
+      : [T("Morning run", true, "07:30"), T("Send the deck to Lina", false, "11:00"), T("Book the dentist", false)],
     "2026-10-30": [T("Friday demo", false, "15:00"), T("Dinner with Sam", false, "19:00")],
     "2026-10-31": [T("Flea market", false, "10:00")]
   };
-  localStorage.setItem("veckolista-v2", JSON.stringify({ users: { "namn:maya": { name: seed.name, tasks: tasks } }, session: null, theme: "light" }));
-  localStorage.setItem("veckolista-settings", JSON.stringify({ theme: "light", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "phone", lang: "en", quote: null, recap: { "namn:maya": "2026-10-19" } }));
+  localStorage.setItem("veckolista-v2", JSON.stringify({ users: { [id]: { name: seed.name, tasks: tasks } }, session: dash ? id : null, theme: "light" }));
+  localStorage.setItem("veckolista-settings", JSON.stringify({ theme: "light", accent: "orange", remind: true, defTime: "09:00", figure: dash ? 3 : 0, view: "phone", lang: "en",
+    quote: dash ? { day: "2026-10-29", i: 3 } : null, recap: { [id]: "2026-10-19" } }));
   document.addEventListener("DOMContentLoaded", () => {
     const st = document.createElement("style"); st.textContent = "html,body{scroll-behavior:auto!important}"; document.head.appendChild(st);
   });

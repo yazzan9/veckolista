@@ -11,7 +11,7 @@
 
   // start screen: name, go
   tap(6.0, "#wl-name", { focus: true });
-  type(6.25, "Maya", 0.125);
+  type(6.25, "Yazan", 0.125);
   tap(7.5, ".nb-go");
   // figure: three changes
   tap(10.0, "#o-fig"); tap(10.75, "#o-fig"); tap(11.5, "#o-fig");
@@ -62,7 +62,7 @@
     Object.assign({ t: 30.1, d: 4.2 }, WIDE, { s: 0.66, ay: 400 }),
     { t: 31.25, d: 0.5, s: 1.1, sel: "#o-idag", ay: 420 },
     Object.assign({ t: 33.25, d: 0.5 }, WIDE),
-    { t: 33.9, d: 0.5, s: 1.3, sel: "#settings .st-row.stack", ay: 430 },
+    { t: 33.9, d: 0.5, s: 0.5, cx: 195, cy: 422, ax: 140, ay: 425 },
     Object.assign({ t: 38.25, d: 0.5 }, WIDE),
     Object.assign({ t: 40.5, d: 0.5 }, WIDE, { s: 0.6 }),
     Object.assign({ t: 41.25, d: 0.75 }, WIDE, { s: 0.52, ay: 1150 })
@@ -101,6 +101,6 @@
   ];
 
   var TL = { BPM: BPM, BEAT: BEAT, DUR: DUR, actions: A, cam: C, caps: CAP, cues: CUES, ACCS: ACCS,
-    seed: { date: "2026-10-29T09:20:00", name: "Maya" } };
+    seed: { date: "2026-10-29T09:20:00", name: "Yazan" } };
   if (typeof module !== "undefined") module.exports = TL; else root.TL = TL;
 })(this);

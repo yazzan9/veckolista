@@ -44,6 +44,7 @@
 <body>
 <canvas id="dots" class="l"></canvas>
 <div id="cam"><div class="phone"></div><div class="screen" style="left:0;top:0"><iframe id="app" src="/index.html" title="Veckolista"></iframe></div></div>
+<div id="cam2" style="position:absolute;left:0;top:0;transform-origin:0 0"><div class="phone"></div><div class="screen"><iframe id="app2" src="/index.html#dash" title="Veckolista overview"></iframe></div></div>
 <canvas id="rings" class="l" width="1080" height="1350" style="width:540px;height:675px"></canvas>
 <div id="band" class="l"></div>
 <div class="corner" style="left:24px">VECKOLISTA<b>.</b></div>
@@ -66,7 +67,7 @@
 <script>
 (function () {
   var W = 540, H = 675, LET = ["M", "T", "W", "T", "F", "S", "S"];
-  var app = document.getElementById("app"), cam = document.getElementById("cam");
+  var app2 = document.getElementById("app2"), app = document.getElementById("app"), cam = document.getElementById("cam");
   var dots = document.getElementById("dots"), rings = document.getElementById("rings");
   function el(id) { return document.getElementById(id); }
   function doc() { return app.contentDocument; }
@@ -98,6 +99,7 @@
         if (a.focus) { e.focus({ preventScroll: true }); e.__fresh = true; }
         e.click();
         if (a.victory) victory = { t: a.t, p: p };
+        if (a.swatch != null) { var s2 = app2.contentDocument.querySelector(a.sel.replace("#settings ", "")); if (s2) s2.click(); }
       } else if (a.act === "scroll") {
         var se = q(a.sel); if (!se) continue;
         var w = win(), by = se.getBoundingClientRect().bottom - (w.innerHeight - a.clear);
@@ -117,7 +119,7 @@
   /* CSS animations inside the app run on wall time. Pin each one to the fake clock instead. */
   var seen = new WeakMap(), lastNow = 0;
   function syncAnims(fdt) {
-    var w = win(), now = w.performance.now(), list = doc().getAnimations();
+    var w = win(), now = w.performance.now(), list = doc().getAnimations().concat(app2.contentDocument.getAnimations());
     for (var i = 0; i < list.length; i++) {
       var an = list[i], st = seen.get(an);
       if (st === undefined) { st = now - fdt; seen.set(an, st); }
@@ -284,6 +286,10 @@
     document.documentElement.style.setProperty("--acc", acc);
     var c = camAt(t);
     cam.style.transform = "translate(" + (c.ax - c.cx * c.s) + "px," + (c.ay - c.cy * c.s) + "px) scale(" + c.s + ")";
+    // the live overview next to the settings phone while the accents change
+    var k2 = eio((t - 33.4) / .5) * (1 - eio((t - 37.75) / .5)), x2 = lerp(760, 400, k2);
+    el("cam2").style.transform = "translate(" + (x2 - 195 * .5) + "px," + (425 - 422 * .5) + "px) scale(.5)";
+    el("cam2").style.visibility = k2 > 0 ? "visible" : "hidden";
     el("band").style.opacity = t > 4.6 && t < 41.5 ? 1 : 0;
     drawDots(t, c, acc); drawRings(t, c, acc); drawCap(t); drawIntro(t, acc); drawEnd(t, acc);
     el("cr").innerHTML = t < 41.9 ? "WK 44 · " + (t < 5 ? "2026" : "THU 29 OCT") : "WK 44 · 2026";
@@ -291,6 +297,7 @@
   };
   window.ready = function () {
     var d = doc(); if (!d || d.readyState !== "complete" || !q("#s-welcome")) return false;
+    var d2 = app2.contentDocument; if (!d2 || d2.readyState !== "complete" || d2.fonts.status !== "loaded") return false;
     return document.fonts.status === "loaded" && d.fonts.status === "loaded";
   };
 })();
