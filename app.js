@@ -28,15 +28,43 @@
     if (!m || !t) return { t: s.trim(), time: "" };
     return { t: t, time: pad(+(m[1] || m[3])) + ":" + (m[2] || m[4] || "00") };
   }
-  /* time picker: hour and minute steppers, nothing is set until KLAR */
+  /* time pickers: big dot digits. Tap the hour or minute to get a grid of every value (any time in two taps),
+     or use + and − to fine-tune; holding + or − repeats. */
   function tpCol(u, what) {
     return '<div class="tp-col"><button type="button" class="rnd" data-tp="' + u + '+" aria-label="' + what + ' senare">+</button>' +
-      '<b class="tp-n" data-tpv="' + u + '"></b><button type="button" class="rnd" data-tp="' + u + '-" aria-label="' + what + ' tidigare">−</button></div>';
+      '<button type="button" class="tp-n" data-tp="g-' + u + '" data-tpv="' + u + '" aria-label="' + (u === "h" ? "Välj timme" : "Välj minut") + '"></button>' +
+      '<button type="button" class="rnd" data-tp="' + u + '-" aria-label="' + what + ' tidigare">−</button></div>';
+  }
+  function tpBody() { return '<div class="tp" role="group" aria-label="Välj tid">' + tpCol("h", "En timme") + '<b class="tp-c" aria-hidden="true">:</b>' + tpCol("m", "Fem minuter") + '</div><div class="tp-grid" hidden></div>'; }
+  function tpGrid(host, unit, cur) {
+    var g = host.querySelector(".tp-grid"), n = unit === "h" ? 24 : 12, h = '<div class="tp-gl">' + (unit === "h" ? "TIMME" : "MINUT") + '</div><div class="tp-g">', i, v;
+    for (i = 0; i < n; i++) { v = unit === "h" ? i : i * 5; h += '<button type="button" class="tp-gb' + (v === cur ? " on" : "") + '" data-tp="s' + unit + ":" + v + '">' + pad(v) + "</button>"; }
+    g.innerHTML = h + "</div>"; g.hidden = !unit;
+    Array.prototype.forEach.call(host.querySelectorAll(".tp-n"), function (d) { d.classList.toggle("on", d.getAttribute("data-tpv") === unit); });
+  }
+  function tpGridClose(host) { var g = host.querySelector(".tp-grid"); if (g) { g.hidden = true; g.innerHTML = ""; } Array.prototype.forEach.call(host.querySelectorAll(".tp-n"), function (d) { d.classList.remove("on"); }); }
+  /* one action on h:m; returns the new [h, m] and opens/closes the grid as a side effect */
+  function tpAct(host, a, h, m) {
+    if (a === "h+") h = (h + 1) % 24; else if (a === "h-") h = (h + 23) % 24;
+    else if (a === "m+") m = (Math.floor(m / 5) * 5 + 5) % 60; else if (a === "m-") m = (Math.ceil(m / 5) * 5 + 55) % 60;
+    else if (a === "g-h" || a === "g-m") { var u = a.slice(2), open = host.querySelector('.tp-n.on[data-tpv="' + u + '"]'); if (open) tpGridClose(host); else tpGrid(host, u, u === "h" ? h : m); return [h, m]; }
+    else if (a.indexOf("sh:") === 0) { h = +a.slice(3); tpGrid(host, "m", m); return [h, m]; }
+    else if (a.indexOf("sm:") === 0) { m = +a.slice(3); tpGridClose(host); return [h, m]; }
+    return [h, m];
+  }
+  function tpHold(host) {
+    if (host.__hold) return; host.__hold = true;
+    var t1, t2;
+    function stop() { clearTimeout(t1); clearInterval(t2); }
+    host.addEventListener("pointerdown", function (e) {
+      var b = e.target.closest('[data-tp="h+"], [data-tp="h-"], [data-tp="m+"], [data-tp="m-"]'); if (!b) return;
+      stop(); t1 = setTimeout(function () { t2 = setInterval(function () { b.click(); }, 110); }, 450);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { host.addEventListener(ev, stop); });
   }
   function openPicker(host, value, done) {
     var p = (value || settings.defTime).split(":"), h = +p[0], m = +p[1];
-    host.innerHTML = '<div class="tp" role="group" aria-label="Välj tid">' + tpCol("h", "En timme") + '<b class="tp-c" aria-hidden="true">:</b>' + tpCol("m", "Fem minuter") + "</div>" +
-      '<div class="tp-acts"><button type="button" class="btn out" data-tp="no">AVBRYT</button><button type="button" class="btn pri" data-tp="ok">KLAR</button></div>';
+    host.innerHTML = tpBody() + '<div class="tp-acts"><button type="button" class="btn out" data-tp="no">AVBRYT</button><button type="button" class="btn pri" data-tp="ok">KLAR</button></div>';
     function draw() { host.querySelector('[data-tpv="h"]').textContent = pad(h); host.querySelector('[data-tpv="m"]').textContent = pad(m); }
     function finish(ok) { closePicker(host); done(ok ? pad(h) + ":" + pad(m) : null); }
     host.onclick = function (e) {
@@ -44,42 +72,36 @@
       var b = e.target.closest("[data-tp]"); if (!b) return;
       var a = b.getAttribute("data-tp");
       if (a === "ok" || a === "no") { finish(a === "ok"); return; }
-      if (a === "h+") h = (h + 1) % 24; else if (a === "h-") h = (h + 23) % 24;
-      else if (a === "m+") m = (Math.floor(m / 5) * 5 + 5) % 60; else if (a === "m-") m = (Math.ceil(m / 5) * 5 + 55) % 60;
-      draw();
+      var r = tpAct(host, a, h, m); h = r[0]; m = r[1]; draw();
     };
     host.confirm = function () { finish(true); };
-    host.hidden = false; draw();
+    tpHold(host); host.hidden = false; draw();
     host.querySelector('[data-tp="ok"]').focus({ preventScroll: true });
     host.scrollIntoView({ block: "nearest", behavior: reduceMq && reduceMq.matches ? "auto" : "smooth" });
   }
-  /* inline dot picker for a new task: empty (no reminder) until the first step, then the shown time is the reminder */
+  /* inline picker for a new task: empty (no reminder) until the first touch, then the shown time is the reminder */
   function inlinePicker(host, get, set, start) {
     host.innerHTML = '<div class="tr-head"><span class="sl">TID = PÅMINNELSE</span><button type="button" class="tr-clear" data-tp="clear">INGEN TID</button></div>' +
-      '<div class="tp" role="group" aria-label="Tid">' + tpCol("h", "En timme") + '<b class="tp-c" aria-hidden="true">:</b>' + tpCol("m", "Fem minuter") + "</div>" +
-      '<div class="ck-cap tp-cap"></div>';
+      tpBody() + '<div class="ck-cap tp-cap"></div>';
     function draw() {
       var v = get(), p = v ? v.split(":") : ["--", "--"];
       host.querySelector('[data-tpv="h"]').textContent = p[0]; host.querySelector('[data-tpv="m"]').textContent = p[1];
       host.classList.toggle("empty", !v);
       host.querySelector('[data-tp="clear"]').hidden = !v;
       var cap = host.querySelector(".tp-cap");
-      cap.textContent = v ? (settings.remind ? "PÅMINNER DIG " + v : "PÅMINNELSER AV · " + v) : "INGEN PÅMINNELSE · TRYCK + ELLER −";
+      cap.textContent = v ? (settings.remind ? "PÅMINNER DIG " + v : "PÅMINNELSER AV · " + v) : "INGEN PÅMINNELSE · TRYCK PÅ SIFFRORNA";
       cap.classList.toggle("on", !!v && settings.remind);
     }
     host.onclick = function (e) {
       var b = e.target.closest("[data-tp]"); if (!b) return;
       e.stopPropagation();
       var a = b.getAttribute("data-tp");
-      if (a === "clear") { set(""); draw(); return; }
-      var v = get();
-      if (!v) { set(start()); draw(); return; }
-      var p = v.split(":"), h = +p[0], m = +p[1];
-      if (a === "h+") h = (h + 1) % 24; else if (a === "h-") h = (h + 23) % 24;
-      else if (a === "m+") m = (Math.floor(m / 5) * 5 + 5) % 60; else if (a === "m-") m = (Math.ceil(m / 5) * 5 + 55) % 60;
-      set(pad(h) + ":" + pad(m)); draw();
+      if (a === "clear") { tpGridClose(host); set(""); draw(); return; }
+      var v = get() || start(), p = v.split(":"), first = !get();
+      var r = first && /^[hm][+-]$/.test(a) ? [+p[0], +p[1]] : tpAct(host, a, +p[0], +p[1]);
+      set(pad(r[0]) + ":" + pad(r[1])); draw();
     };
-    host.draw = draw; draw();
+    tpHold(host); host.draw = draw; draw();
   }
   function closePicker(host) { if (!host || host.hidden) return; host.hidden = true; host.innerHTML = ""; host.onclick = null; host.confirm = null; }
   function pickerOpen(host) { return host && !host.hidden && host.confirm; }
@@ -167,7 +189,7 @@
     "Lägg till en uppgift...": "Add a task...", "Första uppgiften...": "Your first task...", "↑ BÖRJA HÄR. KLOCKAN = PÅMINNELSE": "↑ START HERE. CLOCK = REMINDER",
     "RENSA KLARA": "CLEAR DONE", "SKRIVSKYDDAD": "READ ONLY", "VECKAN ÄR AVSLUTAD": "THE WEEK IS OVER", "AVSLUTAD": "FINISHED", "TOM VECKA": "EMPTY WEEK",
     "NY UPPGIFT": "NEW TASK", "LÄGG TILL": "ADD", "TILLAGD": "ADDED", "INGA UPPGIFTER ÄNNU": "NO TASKS YET", "Vad ska göras?": "What needs doing?", "Ny uppgift": "New task", "Välj dag": "Pick a day",
-    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
+    "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "TRYCK PÅ SIFFRORNA": "TAP THE NUMBERS", "TIMME": "HOUR", "MINUT": "MINUTE", "Välj timme": "Pick the hour", "Välj minut": "Pick the minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
     "Välj tid": "Pick a time", "Tid": "Time", "En timme senare": "One hour later", "En timme tidigare": "One hour earlier", "Fem minuter senare": "Five minutes later", "Fem minuter tidigare": "Five minutes earlier",
     "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MARKERA SOM KLAR": "MARK AS DONE",
     "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",

@@ -521,6 +521,15 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
 .tp-n, .tp-c { font-family: var(--f-dot); font-weight: 800; font-size: 56px; line-height: .9; letter-spacing: .02em; }
 .tp-n { min-width: 2.2ch; text-align: center; }
 .tp-c { color: var(--accent-ink); padding-bottom: 4px; }
+.tp-n { border-radius: 12px; padding: 0 2px; cursor: pointer; }
+.tp-n:hover { color: var(--accent-ink); }
+.tp-n.on { color: var(--accent-ink); }
+.tp-grid { margin-top: 12px; }
+.tp-gl { font-size: 10px; letter-spacing: .16em; color: var(--mute); margin-bottom: 8px; text-align: center; }
+.tp-g { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.tp-gb { height: 38px; border-radius: 19px; border: 1px solid var(--line); font-size: 13px; letter-spacing: .04em; }
+.tp-gb:hover { border-color: var(--fg); }
+.tp-gb.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .tp-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .tp-acts .btn { min-height: 46px; }
 .st-def { padding: 0 14px; }
