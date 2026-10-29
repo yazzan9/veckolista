@@ -81,9 +81,13 @@ input:focus-visible { border-radius: 4px; }
 /* welcome: dancer up top, name card at the bottom within thumb reach */
 .wel .bar .lblv { font-size: 11px; letter-spacing: .18em; color: var(--mute); }
 .wel-in { flex: 1; display: flex; flex-direction: column; }
-.wel-hero { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px 0 8px; }
-.dancer { display: block; border-radius: 24px; }
-.dancer canvas { display: block; width: 210px; aspect-ratio: 15 / 17; }
+.wel-hero { flex: 1; display: flex; align-items: center; padding: 28px 0 16px; }
+.wl-stage { position: relative; width: 100%; --wp: 9.7px; }
+.wl-stage canvas { display: block; width: 100%; height: calc(var(--wp) * 17); }
+.wl-wk { position: absolute; left: 0; bottom: calc(var(--wp) * 1.6); pointer-events: none; }
+.wl-wk .lblv { display: block; font-size: 11px; letter-spacing: .18em; color: var(--mute); margin-bottom: calc(var(--wp) * .8); }
+.wl-wk b { display: block; font-family: var(--f-dot); font-weight: 800; font-size: calc(var(--wp) * 15.5); line-height: .78; letter-spacing: .02em; }
+.dancer { position: absolute; right: 0; top: 0; bottom: 0; width: calc(100% * 15 / 36); border-radius: 18px; }
 .wel-main { padding-top: 8px; }
 .wel h1 { font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: .95; margin: 0; text-transform: uppercase; letter-spacing: .005em; }
 .wel h1 i { font-style: normal; color: var(--accent-ink); }
@@ -516,7 +520,6 @@ body:has(#edit:not([hidden])) .tabbar, body:has(#edit:not([hidden])) .tabfade { 
   body.desk #s-welcome { max-width: 1040px; }
   body.desk .wel-in { flex-direction: row; align-items: center; gap: 88px; }
   body.desk .wel-hero { padding: 0; }
-  body.desk .dancer canvas { width: 340px; }
   body.desk .wel-main { flex: none; width: 420px; padding: 0; }
   body.desk .wel h1 { font-size: 88px; }
   body.desk #s-add { grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 520px; }
