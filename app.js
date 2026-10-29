@@ -174,7 +174,7 @@
   /* ---------- theme, toast, screens ---------- */
   /* UI settings live in their own key, apart from the account data */
   var SKEY = "veckolista-settings", ACC = { orange: "ORANGE", rosa: "ROSA", korall: "KORALL", mint: "MINT", lime: "LIME", bla: "BLÅ", mono: "MONO" };
-  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null, recap: null, figTapped: false };
+  var settings = { theme: "system", accent: "orange", remind: true, defTime: "09:00", figure: 0, view: "desk", lang: "en", quote: null, recap: null };
   function loadSettings() {
     try {
       var s = JSON.parse(localStorage.getItem(SKEY));
@@ -633,7 +633,6 @@
   }
   function danceStart(fresh) { figColors(); dance.last = ""; if (fresh) { dance.t0 = performance.now(); dance.off = 0; } if (!dance.raf) dance.raf = requestAnimationFrame(danceLoop); }
   $("wl-dance").onclick = function () {
-    markTapped();
     var t = performance.now() - dance.t0 + dance.off, a = dAt(DSCENES, t);
     dance.off += a.end - t; buzz(6); danceStart();
   };
@@ -1285,12 +1284,7 @@
     $("o-fig").setAttribute("aria-label", "Figur: " + FIGS[settings.figure][0].toLowerCase() + ". Tryck för nästa figur");
     if (!fig.raf) fig.raf = requestAnimationFrame(figLoop);
   }
-  function markTapped() {
-    settings.figTapped = true; saveSettings();
-    $("o-fig").classList.add("tapped"); $("wl-dance").classList.add("tapped");
-  }
   $("o-fig").onclick = function () {
-    markTapped();
     fig.from = settings.figure; fig.t0 = performance.now();
     settings.figure = (settings.figure + 1) % FIGS.length; saveSettings(); buzz(6); figStart();
   };
@@ -1433,7 +1427,6 @@
 
   /* ---------- start ---------- */
   load(); loadSettings(); applyLang(); applyTheme();
-  if (settings.figTapped) { $("o-fig").classList.add("tapped"); $("wl-dance").classList.add("tapped"); }
   show(cur() ? "home" : "welcome");
   ensureDemo();
 })();

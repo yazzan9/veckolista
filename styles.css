@@ -301,10 +301,6 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 /* the figure rises from behind the card below: its bottom two dot rows sit under the card edge */
 .fig { position: absolute; right: 0; bottom: -54px; z-index: 0; width: 120px; height: 120px; border-radius: 18px; }
 .fig canvas { display: block; width: 120px; height: 120px; }
-/* tap hint: a small arrow badge on the figures; it wiggles a few times until the figure has been tapped once */
-.fhint { position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--fg); color: var(--bg); display: grid; place-items: center; font-size: 13px; line-height: 1; pointer-events: none; z-index: 2; }
-.fig:not(.tapped) .fhint, .dancer:not(.tapped) .fhint { animation: nudge 2.6s ease-in-out 1.4s 4; }
-@keyframes nudge { 0%, 55%, 100% { transform: none; } 12% { transform: rotate(-20deg) scale(1.18); } 26% { transform: rotate(16deg) scale(1.18); } 40% { transform: rotate(-8deg) scale(1.1); } }
 .g-n { margin: 0; flex: 0 1 auto; min-width: 0; white-space: nowrap; font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; text-transform: uppercase; letter-spacing: .005em; }
 .g-n i { font-style: normal; color: var(--accent-ink); }
 .g-d { margin-top: 10px; font-size: 11px; letter-spacing: .14em; color: var(--mute); }
