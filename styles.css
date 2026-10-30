@@ -644,9 +644,14 @@ body:has(#recap:not([hidden])) .tabbar, body:has(#recap:not([hidden])) .tabfade 
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- missade: one compact row in the IDAG tile, a sheet that lists them ---------- */
-.t-row .sp { flex: 1; }
-.i-miss { position: relative; z-index: 2; height: 40px; margin: -12px 0 -12px 10px; padding: 0 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: .14em; color: var(--accent-ink); }
-.i-miss::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.mtile { display: block; width: 100%; text-align: left; color: var(--fg); }
+.mtile .t-row { min-height: 0; height: 16px; }
+.mtile .t-l { color: var(--accent-ink); }
+.m-main { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.m-main b { font-family: var(--f-dot); font-weight: 800; font-size: 56px; line-height: .86; color: var(--accent-ink); }
+.m-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: .12em; }
+.m-t span + span { color: var(--mute); }
+.m-go { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-size: 16px; flex: none; }
 .mi-big { display: flex; align-items: baseline; gap: 12px; padding: 14px 0 18px; }
 .mi-big b { font-family: var(--f-dot); font-weight: 800; font-size: 72px; line-height: .86; color: var(--accent-ink); }
 .mi-big span { font-size: 11px; letter-spacing: .14em; color: var(--mute); }
@@ -658,4 +663,4 @@ body:has(#recap:not([hidden])) .tabbar, body:has(#recap:not([hidden])) .tabfade 
 .mi-row .act.mvm { width: 40px; height: 40px; flex: none; }
 #mi-all { margin-top: 8px; }
 .tdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-left: 6px; vertical-align: .32em; }
-.i-miss::after { content: "→"; }
+.mtile .qdot { background: var(--accent); }

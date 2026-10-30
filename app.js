@@ -217,7 +217,7 @@
     "NY UPPGIFT": "NEW TASK", "LÄGG TILL": "ADD", "TILLAGD": "ADDED", "INGA UPPGIFTER ÄNNU": "NO TASKS YET", "Vad ska göras?": "What needs doing?", "Ny uppgift": "New task", "Välj dag": "Pick a day",
     "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "SKRIV TIDEN ELLER ANVÄND + OCH −": "TYPE THE TIME OR USE + AND −", "LÄGG TILL PÅMINNELSE": "ADD A REMINDER", "SNYGGT!": "NICE!", "BRA JOBBAT!": "GOOD JOB!", "EN MINDRE!": "ONE LESS!", "TOPPEN!": "GREAT!", "KLART!": "DONE!", "Timme": "Hour", "Minut": "Minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
     "Välj tid": "Pick a time", "Tid": "Time", "En timme senare": "One hour later", "En timme tidigare": "One hour earlier", "Fem minuter senare": "Five minutes later", "Fem minuter tidigare": "Five minutes earlier",
-    "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MISSADE UPPGIFTER": "MISSED TASKS", "FLYTTA ALLA TILL IDAG": "MOVE ALL TO TODAY", "MARKERA SOM KLAR": "MARK AS DONE",
+    "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MISSADE UPPGIFTER": "MISSED TASKS", "MISSADE · TIDIGARE DAGAR": "MISSED · EARLIER DAYS", "UPPGIFTER": "TASKS", "UPPGIFT": "TASK", "FLYTTA ALLA TILL IDAG": "MOVE ALL TO TODAY", "MARKERA SOM KLAR": "MARK AS DONE",
     "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",
     "FLYTTAR UPPGIFTEN TILL I MORGON. DEN FÖRSVINNER FRÅN IDAG.": "MOVES THE TASK TO TOMORROW. IT DISAPPEARS FROM TODAY.",
     "INSTÄLLNINGAR": "SETTINGS", "KONTO": "ACCOUNT", "UTSEENDE": "APPEARANCE", "TEMA": "THEME", "LJUS": "LIGHT", "MÖRK": "DARK", "FÄRG": "COLOUR",
@@ -235,6 +235,7 @@
     [/^(\d+) MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG$/, "$1 MISSED · TAP → TO MOVE TO TODAY"],
     [/^FLYTTAR UPPGIFTEN TILL (.+)\. DEN FÖRSVINNER FRÅN (.+)\.$/, function (m, a, b) { return "MOVES THE TASK TO " + tr(a) + ". IT DISAPPEARS FROM " + tr(b) + "."; }],
     [/^(\d+) FLYTTADE TILL IDAG$/, "$1 MOVED TO TODAY"], [/^FRÅN TIDIGARE DAGAR · VECKA (\d+)$/, "FROM EARLIER DAYS · WEEK $1"],
+    [/^FRÅN (.+)$/, function (m, a) { return "FROM " + a.replace(/ OCH /, " AND "); }],
     [/^(\d+) UPPGIFT$/, "$1 TASK"], [/^(\d+) UPPGIFTER$/, "$1 TASKS"], [/^(\d+) MISSADE$/, "$1 MISSED"], [/^(\d+) KVAR$/, "$1 LEFT"], [/^(\d+) KVAR IDAG$/, "$1 LEFT TODAY"],
     [/^\/ (\d+) KLARA$/, "/ $1 DONE"], [/^(\d+) \/ (\d+) KLARA$/, "$1 / $2 DONE"], [/^(\d+) KLARA RENSADE$/, "$1 DONE CLEARED"], [/^(\d+) KLAR RENSAD$/, "$1 DONE CLEARED"],
     [/^SERIE: (\d+) DAG$/, "STREAK: $1 DAY"], [/^SERIE: (\d+) DAGAR$/, "STREAK: $1 DAYS"], [/^OM (\d+) VECKOR$/, "IN $1 WEEKS"], [/^VECKA (\d+)$/, "WEEK $1"],
@@ -1040,8 +1041,14 @@
   /* ---------- missade: a count in the IDAG tile and a sheet to move them, one by one or all at once ---------- */
   function syncMissed() {
     if (!cur()) return;
-    var n = missedCount(), b = $("o-miss");
-    b.hidden = !n; b.textContent = n + " MISSADE";
+    var g = missedDays(), n = 0, names = g.map(function (d) { n += d.ts.length; return DAYS[d.i]; }), b = $("o-miss");
+    b.hidden = !n;
+    if (n) {
+      $("o-miss-n").textContent = n; $("o-miss-u").textContent = n === 1 ? "UPPGIFT" : "UPPGIFTER";
+      // names the days, so it reads as earlier days and never as today
+      $("o-miss-d").textContent = "FRÅN " + (names.length > 1 ? names.slice(0, -1).join(", ") + " OCH " + names[names.length - 1] : names[0]);
+      b.setAttribute("aria-label", n + " missade uppgifter från tidigare dagar. Visa");
+    }
     if (!$("missed").hidden) renderMissed();
   }
   function renderMissed() {

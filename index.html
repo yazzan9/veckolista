@@ -104,7 +104,7 @@
 
   <section class="tile idag" id="o-idag" aria-label="Idag">
     <button class="tilelink" data-plan="today" aria-label="Öppna idag i Plan"></button>
-    <div class="t-row"><span class="t-l">IDAG</span><button class="i-miss" id="o-miss" hidden></button><span class="sp"></span><button class="plus" id="o-add" aria-label="Lägg till uppgift">+</button></div>
+    <div class="t-row"><span class="t-l">IDAG</span><button class="plus" id="o-add" aria-label="Lägg till uppgift">+</button></div>
     <div class="i-main">
       <div class="i-n" id="o-done">0</div>
       <div class="i-of" id="o-of">/ 0 KLARA</div>
@@ -137,6 +137,12 @@
     <ul class="up" id="o-up"></ul>
     <div class="w-streak" id="o-streak" hidden></div>
   </section>
+
+  <!-- missade: its own card at the end, so it never reads as part of today -->
+  <button class="tile mtile" id="o-miss" type="button" hidden>
+    <span class="t-row"><span class="t-l">MISSADE · TIDIGARE DAGAR</span><i class="qdot" aria-hidden="true"></i></span>
+    <span class="m-main"><b id="o-miss-n">0</b><span class="m-t"><span id="o-miss-u">UPPGIFTER</span><span id="o-miss-d"></span></span><span class="m-go" aria-hidden="true">→</span></span>
+  </button>
 </main>
 
 <!-- Huvudsida (Plan) -->
