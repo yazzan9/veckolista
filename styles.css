@@ -424,7 +424,7 @@ body:has(#settings:not([hidden])) .tabbar, body:has(#settings:not([hidden])) .ta
 .ad-days { display: flex; justify-content: space-between; gap: 4px; margin-top: 14px; }
 .adday { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); font-size: 11px; letter-spacing: .06em; flex: none; }
 .adday.sel { background: var(--accent); border-color: var(--accent-ink); color: var(--on-accent); }
-.adday:disabled:not(.sel) { opacity: .35; cursor: default; }
+.adday:disabled:not(.sel) { color: var(--dot-off); border-color: var(--dot-off); cursor: default; }
 body.adding .tabfade { display: none; }
 body.adding .tabbar { bottom: max(calc(20px + env(safe-area-inset-bottom, 0px)), calc(var(--kb, 0px) + 8px)); }
 body:has(.tabbar:not([hidden])) .toast { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }

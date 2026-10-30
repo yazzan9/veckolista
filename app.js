@@ -148,7 +148,10 @@
   function allTasks() { var u = cur(); return u ? u.tasks : {}; }
   function list(k) { return allTasks()[k] || []; }
   function totalTasks() { var n = 0, t = allTasks(); for (var k in t) n += t[k].length; return n; }
-  function push(k, t) { var all = allTasks(); (all[k] = all[k] || []).push(t); }
+  /* tasks never land on a past day: every add and move goes through push, which moves a past day to today.
+     Undo restores with insertAt, so an old task can still go back where it was. */
+  function notPast(k) { var nk = key(new Date()); return k < nk ? nk : k; }
+  function push(k, t) { k = notPast(k); var all = allTasks(); (all[k] = all[k] || []).push(t); return k; }
 
   async function hash(pw, email) {
     try {
@@ -769,6 +772,13 @@
           dh += '<div class="rofoot">SKRIVSKYDDAD · VECKAN ÄR AVSLUTAD</div></div>';
           return;
         }
+        // an earlier day this week keeps its tasks (and missed ones keep →), but takes no new ones
+        if (dayMiss) {
+          if (!ts.length) dh += '<div class="note">INGET PLANERAT</div>';
+          if (dn) dh += '<button class="clear" data-clear="' + k + '">RENSA KLARA</button>';
+          dh += "</div>";
+          return;
+        }
         if (!ts.length) {
           dh += '<div class="ghosts"><div class="ghost" style="opacity:.75"><i></i><b style="width:130px"></b></div><div class="ghost" style="opacity:.45"><i></i><b style="width:90px"></b></div><div class="ghost" style="opacity:.25"><i></i><b style="width:150px"></b></div></div>';
           dh += '<div class="note">INGET PLANERAT ÄNNU</div><div class="sugg"><span class="sl">KOM IGÅNG MED ETT FÖRSLAG</span><div class="chips">';
@@ -842,7 +852,7 @@
     var c = e.target.closest("[data-clear]");
     if (c) { clearDone(c.getAttribute("data-clear")); return; }
     var sg = e.target.closest("[data-sug]");
-    if (sg) { push(sg.getAttribute("data-k"), { id: uid(), t: t(sg.getAttribute("data-sug")), d: false }); save(); render(); return; }
+    if (sg) { openKey = push(sg.getAttribute("data-k"), { id: uid(), t: t(sg.getAttribute("data-sug")), d: false }); save(); render(); return; }
     var gt = e.target.closest("[data-goto]");
     if (gt) { openKey = gt.getAttribute("data-goto"); render(); scrollOpenDay(); return; }
     if (e.target.closest("[data-nextweek]")) { setWeek(addDays(weekStart, 7)); return; }
@@ -872,7 +882,7 @@
     var nt = { id: uid(), t: p.t, d: false };
     if (p.time) nt.time = p.time; else if (pend.k === k && pend.time) nt.time = pend.time;
     pend = { k: null, time: "", rem: false };
-    push(k, nt); save(); focusKey = k; render();
+    k = push(k, nt); save(); focusKey = openKey = k; render();
     if (nt.time) toast("TILLAGD · PÅMINNELSE " + nt.time);
   });
 
@@ -915,7 +925,7 @@
   }
   function moveTask(k, id, to) {
     var g = takeOut(k, id); if (!g) return;
-    push(to, g.t); pulseId = g.t.id; save(); render();
+    to = push(to, g.t); pulseId = g.t.id; save(); render();
     var d = fromKey(to), other = key(mondayOf(d)) !== key(weekStart);
     offerUndo("FLYTTAD TILL " + (to === key(new Date()) ? "IDAG" : DAYS[(d.getDay() + 6) % 7]) + (other ? " · V" + isoWeek(d) : ""),
       function () { var b = takeOut(to, id); if (b) insertAt(k, g.i, b.t); });
@@ -940,7 +950,7 @@
     $("ed-wk").textContent = "VECKA " + isoWeek(d);
     for (i = 0; i < 7; i++) {
       var dd = addDays(m, i), dk = key(dd);
-      h += '<button type="button" class="adday' + (dk === ed.day ? " sel" : "") + '" data-ed="' + dk + '" aria-pressed="' + (dk === ed.day) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK && dk !== ed.k ? " disabled" : "") + ">" + LET[i] + "</button>";
+      h += '<button type="button" class="adday' + (dk === ed.day ? " sel" : "") + '" data-ed="' + dk + '" aria-pressed="' + (dk === ed.day) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK && dk !== ed.k ? ' disabled aria-disabled="true"' : "") + ">" + LET[i] + "</button>";
     }
     $("ed-days").innerHTML = h;
     var other = ed.time && ED_CHIPS.indexOf(ed.time) < 0;
@@ -953,10 +963,10 @@
     var di = (d.getDay() + 6) % 7;
     $("ed-cap").textContent = ed.time && !settings.remind ? "PÅMINNELSER AV" : ed.time ? "PÅMINNER DIG " + (ed.day === nowK ? "IDAG" : DAYS[di]) : "INGEN PÅMINNELSE";
     $("ed-cap").classList.toggle("on", !!ed.time && settings.remind);
-    var nx = addDays(fromKey(ed.k), 1), from = (fromKey(ed.k).getDay() + 6) % 7;
-    $("ed-move-w").hidden = key(nx) < nowK;
+    // next day, but never a past one: an old task moves to today
+    var nx = fromKey(edNext()), from = (fromKey(ed.k).getDay() + 6) % 7;
     $("ed-move-h").textContent = ed.k === nowK ? "FLYTTAR UPPGIFTEN TILL I MORGON. DEN FÖRSVINNER FRÅN IDAG."
-      : "FLYTTAR UPPGIFTEN TILL " + DAYS[(nx.getDay() + 6) % 7] + ". DEN FÖRSVINNER FRÅN " + DAYS[from] + ".";
+      : "FLYTTAR UPPGIFTEN TILL " + (key(nx) === nowK ? "IDAG" : DAYS[(nx.getDay() + 6) % 7]) + ". DEN FÖRSVINNER FRÅN " + DAYS[from] + ".";
   }
   function stepTime(min) {
     var p = (ed.time || settings.defTime).split(":"), t = ed.time ? +p[0] * 60 + +p[1] + min : +p[0] * 60 + +p[1];
@@ -985,14 +995,15 @@
     if (ed.time) t.time = ed.time; else delete t.time;
     if (ed.done && !t.d) pulseId = t.id;
     t.d = ed.done;
-    if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; push(ed.day, t); }
+    if (ed.day !== ed.k) { arr.splice(idx, 1); allTasks()[ed.k] = arr; ed.day = push(ed.day, t); }
     var tk = key(new Date()), doneNow = pulseId === t.id, day = ed.day, finished = doneNow && day === tk && list(tk).every(function (x) { return x.d; });
     save(); closeEdit(); render();
     if (finished) { buzz([8, 70, 8, 70, 8]); celebrate(innerWidth / 2, innerHeight / 2, list(tk).length); }
     else if (doneNow) { buzz(8); cheer(day); }
   };
+  function edNext() { return notPast(key(addDays(fromKey(ed.k), 1))); }
   $("ed-move").onclick = function () {
-    var k = ed.k, id = ed.id, to = key(addDays(fromKey(ed.k), 1));
+    var k = ed.k, id = ed.id, to = edNext();
     ed.day = ed.k; $("ed-save").click(); moveTask(k, id, to);
   };
   $("ed-del").onclick = function () { var k = ed.k, id = ed.id; closeEdit(); delTask(k, id); };
@@ -1041,7 +1052,7 @@
     addChips();
     for (var i = 0; i < 7; i++) {
       var dk = key(addDays(m, i)), dd = addDays(m, i);
-      h += '<button type="button" class="adday' + (dk === addKey ? " sel" : "") + '" data-ad="' + dk + '" aria-pressed="' + (dk === addKey) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK ? " disabled" : "") + ">" + LET[i] + "</button>";
+      h += '<button type="button" class="adday' + (dk === addKey ? " sel" : "") + '" data-ad="' + dk + '" aria-pressed="' + (dk === addKey) + '" aria-label="' + DAYS[i] + " " + dd.getDate() + " " + MON[dd.getMonth()] + '"' + (dk < nowK ? ' disabled aria-disabled="true"' : "") + ">" + LET[i] + "</button>";
     }
     $("ad-days").innerHTML = h;
   }
@@ -1070,7 +1081,7 @@
     var inp = $("ad-inp"), p = parseTime(inp.value); if (!p.t) { inp.focus(); return; }
     var nt = { id: uid(), t: p.t, d: false };
     if (addTime || p.time) nt.time = addTime || p.time;
-    push(addKey, nt); save(); inp.value = ""; addTime = ""; setAdClock(false);
+    addKey = push(addKey, nt); save(); inp.value = ""; addTime = ""; setAdClock(false);
     /* back to the day the task was made, with the new task pulsing */
     weekStart = mondayOf(fromKey(addKey)); openKey = addKey; pulseId = nt.id;
     setTab("plan"); scrollOpenDay(); buzz(8);
