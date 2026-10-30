@@ -642,3 +642,20 @@ body:has(#recap:not([hidden])) .tabbar, body:has(#recap:not([hidden])) .tabfade 
 .party-t span { display: block; margin-top: 16px; font-size: 11px; letter-spacing: .16em; color: var(--mute); }
 
 .rofoot { margin-top: 12px; font-size: 10px; letter-spacing: .1em; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- missade: one compact row in the IDAG tile, a sheet that lists them ---------- */
+.t-row .sp { flex: 1; }
+.i-miss { position: relative; z-index: 2; height: 40px; margin: -12px 0 -12px 10px; padding: 0 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: .14em; color: var(--accent-ink); }
+.i-miss::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.mi-big { display: flex; align-items: baseline; gap: 12px; padding: 14px 0 18px; }
+.mi-big b { font-family: var(--f-dot); font-weight: 800; font-size: 72px; line-height: .86; color: var(--accent-ink); }
+.mi-big span { font-size: 11px; letter-spacing: .14em; color: var(--mute); }
+.mi-day { margin-bottom: 14px; }
+.mi-day > .t-l { display: block; padding-bottom: 6px; }
+.mi-row { display: flex; align-items: center; gap: 12px; min-height: 49px; border-top: 1px dashed var(--line); }
+.mi-row .tm { color: var(--mute); }
+.mi-row .tt { flex: 1; min-width: 0; font-size: 14px; color: var(--mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mi-row .act.mvm { width: 40px; height: 40px; flex: none; }
+#mi-all { margin-top: 8px; }
+.tdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); margin-left: 6px; vertical-align: .32em; }
+.i-miss::after { content: "→"; }

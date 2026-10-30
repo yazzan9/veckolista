@@ -104,7 +104,7 @@
 
   <section class="tile idag" id="o-idag" aria-label="Idag">
     <button class="tilelink" data-plan="today" aria-label="Öppna idag i Plan"></button>
-    <div class="t-row"><span class="t-l">IDAG</span><button class="plus" id="o-add" aria-label="Lägg till uppgift">+</button></div>
+    <div class="t-row"><span class="t-l">IDAG</span><button class="i-miss" id="o-miss" hidden></button><span class="sp"></span><button class="plus" id="o-add" aria-label="Lägg till uppgift">+</button></div>
     <div class="i-main">
       <div class="i-n" id="o-done">0</div>
       <div class="i-of" id="o-of">/ 0 KLARA</div>
@@ -247,6 +247,17 @@
 </div>
 
 <!-- Redigera uppgift -->
+<!-- Missade: unfinished tasks from earlier days this week, nothing moves until the user says so -->
+<div id="missed" class="ov" hidden>
+  <div class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="mi-lbl">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="bar"><span class="t-l" id="mi-lbl">MISSADE UPPGIFTER</span><span class="sp"></span><button class="pill rnd" id="mi-close" aria-label="Stäng">×</button></div>
+    <div class="mi-big"><b id="mi-n">0</b><span id="mi-s"></span></div>
+    <div id="mi-list"></div>
+    <button type="button" class="btn pri" id="mi-all">FLYTTA ALLA TILL IDAG <span aria-hidden="true">→</span></button>
+  </div>
+</div>
+
 <div id="edit" class="ov" hidden>
   <div class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="ed-lbl">
     <div class="grab" aria-hidden="true"></div>

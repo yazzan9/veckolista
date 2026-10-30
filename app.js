@@ -217,7 +217,7 @@
     "NY UPPGIFT": "NEW TASK", "LÄGG TILL": "ADD", "TILLAGD": "ADDED", "INGA UPPGIFTER ÄNNU": "NO TASKS YET", "Vad ska göras?": "What needs doing?", "Ny uppgift": "New task", "Välj dag": "Pick a day",
     "INGEN TID": "NO TIME", "INGEN PÅMINNELSE": "NO REMINDER", "TRYCK + ELLER −": "TAP + OR −", "SKRIV TIDEN ELLER ANVÄND + OCH −": "TYPE THE TIME OR USE + AND −", "LÄGG TILL PÅMINNELSE": "ADD A REMINDER", "SNYGGT!": "NICE!", "BRA JOBBAT!": "GOOD JOB!", "EN MINDRE!": "ONE LESS!", "TOPPEN!": "GREAT!", "KLART!": "DONE!", "Timme": "Hour", "Minut": "Minute", "AVBRYT": "CANCEL", "KLAR": "DONE", "INGEN": "NONE", "ANNAN": "OTHER",
     "Välj tid": "Pick a time", "Tid": "Time", "En timme senare": "One hour later", "En timme tidigare": "One hour earlier", "Fem minuter senare": "Five minutes later", "Fem minuter tidigare": "Five minutes earlier",
-    "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MARKERA SOM KLAR": "MARK AS DONE",
+    "REDIGERA UPPGIFT": "EDIT TASK", "DAG": "DAY", "Dag": "Day", "Titel": "Title", "FLYTTA TILL NÄSTA DAG": "MOVE TO NEXT DAY", "MISSADE UPPGIFTER": "MISSED TASKS", "FLYTTA ALLA TILL IDAG": "MOVE ALL TO TODAY", "MARKERA SOM KLAR": "MARK AS DONE",
     "TA BORT": "DELETE", "SPARA": "SAVE", "ÅNGRA": "UNDO", "15 minuter tidigare": "15 minutes earlier", "15 minuter senare": "15 minutes later",
     "FLYTTAR UPPGIFTEN TILL I MORGON. DEN FÖRSVINNER FRÅN IDAG.": "MOVES THE TASK TO TOMORROW. IT DISAPPEARS FROM TODAY.",
     "INSTÄLLNINGAR": "SETTINGS", "KONTO": "ACCOUNT", "UTSEENDE": "APPEARANCE", "TEMA": "THEME", "LJUS": "LIGHT", "MÖRK": "DARK", "FÄRG": "COLOUR",
@@ -234,6 +234,7 @@
   var EN_PAT = [
     [/^(\d+) MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG$/, "$1 MISSED · TAP → TO MOVE TO TODAY"],
     [/^FLYTTAR UPPGIFTEN TILL (.+)\. DEN FÖRSVINNER FRÅN (.+)\.$/, function (m, a, b) { return "MOVES THE TASK TO " + tr(a) + ". IT DISAPPEARS FROM " + tr(b) + "."; }],
+    [/^(\d+) FLYTTADE TILL IDAG$/, "$1 MOVED TO TODAY"], [/^FRÅN TIDIGARE DAGAR · VECKA (\d+)$/, "FROM EARLIER DAYS · WEEK $1"],
     [/^(\d+) UPPGIFT$/, "$1 TASK"], [/^(\d+) UPPGIFTER$/, "$1 TASKS"], [/^(\d+) MISSADE$/, "$1 MISSED"], [/^(\d+) KVAR$/, "$1 LEFT"], [/^(\d+) KVAR IDAG$/, "$1 LEFT TODAY"],
     [/^\/ (\d+) KLARA$/, "/ $1 DONE"], [/^(\d+) \/ (\d+) KLARA$/, "$1 / $2 DONE"], [/^(\d+) KLARA RENSADE$/, "$1 DONE CLEARED"], [/^(\d+) KLAR RENSAD$/, "$1 DONE CLEARED"],
     [/^SERIE: (\d+) DAG$/, "STREAK: $1 DAY"], [/^SERIE: (\d+) DAGAR$/, "STREAK: $1 DAYS"], [/^OM (\d+) VECKOR$/, "IN $1 WEEKS"], [/^VECKA (\d+)$/, "WEEK $1"],
@@ -440,7 +441,7 @@
     fitName(); figStart();
     var dl = DAYS[idx] + " · " + now.getDate() + " " + MON[now.getMonth()];
     $("o-date").textContent = dl + " · VECKA " + isoWeek(now);
-    renderQuote();
+    renderQuote(); syncMissed();
 
     var ts = list(nk), dn = ts.filter(function (t) { return t.d; }).length, n = ts.length, left = n - dn;
     var box = $("o-idag"), st = !n ? "empty" : left ? "tasks" : "done";
@@ -702,7 +703,7 @@
   /* ---------- home ---------- */
   function enterHome() {
     today = new Date(); todayKey = key(today);
-    weekStart = mondayOf(today); openKey = firstMissedOr(todayKey);
+    weekStart = mondayOf(today); openKey = todayKey;
     var u = cur();
     $("over-prof").textContent = u ? u.name.charAt(0).toUpperCase() : "?";
     render();
@@ -714,11 +715,17 @@
       return a.time ? -1 : b.time ? 1 : 0;
     });
   }
-  function firstMissedOr(k) {
-    var nowK = key(new Date()), m = mondayOf(new Date());
-    for (var i = 0; i < 7; i++) { var dk = key(addDays(m, i)); if (dk >= nowK) break; if (list(dk).some(function (t) { return !t.d; })) return dk; }
-    return k;
+  /* unfinished tasks on earlier days of this week, grouped by day. They stay where they are until the user moves them. */
+  function missedDays() {
+    var nowK = key(new Date()), m = mondayOf(new Date()), out = [];
+    for (var i = 0; i < 7; i++) {
+      var dk = key(addDays(m, i)); if (dk >= nowK) break;
+      var ts = sorted(list(dk)).filter(function (t) { return !t.d; });
+      if (ts.length) out.push({ k: dk, i: i, ts: ts });
+    }
+    return out;
   }
+  function missedCount() { return missedDays().reduce(function (n, g) { return n + g.ts.length; }, 0); }
   function weekKind() { var cm = key(mondayOf(new Date())), w = key(weekStart); return w < cm ? -1 : w > cm ? 1 : 0; }
   function render() {
     var u = cur(); if (!u) return;
@@ -750,8 +757,10 @@
       mh += '<button class="mcol' + (k === openKey ? " on" : "") + (k === flashKey ? " flash" : "") + (k === openKey || (future && idx === 0) ? " sel" : "") + '" data-pick="' + k + '" aria-label="' + DAYS[idx] + '"><span class="l">' + LET[idx] + "</span>" + dots + "</button>";
 
       var open = k === openKey, dn = ts.filter(function (t) { return t.d; }).length;
+      // this week the list starts at today; an earlier day shows up only while it is picked in the strip
+      if (dayMiss && !open) return;
       var meta = (isToday ? '<span class="now">IDAG</span> · ' : k === ydK && kind === 0 ? "IGÅR · " : "") + d.getDate() + " " + MON[d.getMonth()] + (mn && !open ? ' · <span class="miss">' + mn + " MISSADE</span>" : ts.length ? " · " + dn + "/" + ts.length : "");
-      dh += '<div class="day' + (open ? " open" : "") + (k === flashKey ? " flash" : "") + '"><button class="dayhead" data-head="' + k + '" aria-expanded="' + open + '"><span class="name">' + DAYS[idx] + '</span><span class="meta">' + meta + "</span></button>";
+      dh += '<div class="day' + (open ? " open" : "") + (k === flashKey ? " flash" : "") + '"><button class="dayhead" data-head="' + k + '" aria-expanded="' + open + '"><span class="name">' + DAYS[idx] + (isToday ? '<i class="tdot" aria-hidden="true"></i>' : "") + '</span><span class="meta">' + meta + "</span></button>";
       if (open) {
         var allDone = ts.length > 0 && dn === ts.length;
         if (mn) dh += '<div class="missbar">' + mn + " MISSADE · TRYCK → FÖR ATT FLYTTA TILL IDAG</div>";
@@ -805,12 +814,13 @@
     if (focusKey) { var inp = $("add-" + focusKey); if (inp) inp.focus(); focusKey = null; }
     pulseId = null; flashKey = null;
     if (isDesk() && !$("s-over").hidden) renderOver();
+    syncMissed();
   }
 
   function setWeek(ws) {
     weekStart = ws;
     var mk = key(ws), end = key(addDays(ws, 6));
-    openKey = (todayKey >= mk && todayKey <= end) ? firstMissedOr(todayKey) : mk > todayKey ? null : mk;
+    openKey = (todayKey >= mk && todayKey <= end) ? todayKey : mk > todayKey ? null : mk;
     render();
   }
   $("prev").onclick = function () { setWeek(addDays(weekStart, -7)); };
@@ -932,7 +942,7 @@
   }
   $("undo-b").onclick = function () {
     if (!undoFn) return;
-    undoFn(); undoFn = null; save(); render();
+    undoFn(); undoFn = null; save(); render(); if (!$("s-over").hidden) renderOver();
     clearTimeout(undoT); $("undo").hidden = true;
   };
 
@@ -1026,6 +1036,52 @@
     panel.addEventListener("pointerup", end); panel.addEventListener("pointercancel", end);
   }
   swipeDown(document.querySelector("#edit .panel"), closeEdit);
+
+  /* ---------- missade: a count in the IDAG tile and a sheet to move them, one by one or all at once ---------- */
+  function syncMissed() {
+    if (!cur()) return;
+    var n = missedCount(), b = $("o-miss");
+    b.hidden = !n; b.textContent = n + " MISSADE";
+    if (!$("missed").hidden) renderMissed();
+  }
+  function renderMissed() {
+    var g = missedDays(), n = 0, h = "";
+    if (!g.length) { closeMissed(); return; }
+    g.forEach(function (day) {
+      var d = fromKey(day.k);
+      h += '<div class="mi-day"><span class="t-l">' + DAYS[day.i] + " · " + d.getDate() + " " + MON[d.getMonth()] + "</span>";
+      day.ts.forEach(function (t) {
+        n++;
+        h += '<div class="mi-row"><span class="tt">' + (t.time ? '<span class="tm">' + esc(t.time) + " </span>" : "") + '<span data-notr>' + esc(t.t) + "</span></span>" +
+          '<button class="act mvm" data-mi="' + day.k + '" data-id="' + t.id + '" aria-label="Flytta till idag: ' + esc(t.t) + '">→</button></div>';
+      });
+      h += "</div>";
+    });
+    $("mi-list").innerHTML = h;
+    $("mi-n").textContent = n;
+    $("mi-s").textContent = "FRÅN TIDIGARE DAGAR · VECKA " + isoWeek(new Date());
+  }
+  function openMissed() { renderMissed(); $("missed").hidden = false; $("mi-close").focus(); }
+  function closeMissed() { $("missed").hidden = true; }
+  $("o-miss").onclick = openMissed;
+  $("mi-close").onclick = closeMissed;
+  $("missed").addEventListener("click", function (e) {
+    if (e.target === $("missed")) { closeMissed(); return; }
+    var b = e.target.closest("[data-mi]"); if (!b) return;
+    moveTask(b.getAttribute("data-mi"), b.getAttribute("data-id"), key(new Date()));
+    renderOver();
+  });
+  // one action, one undo: every missed task goes to today and ÅNGRA puts each back on its own day and place
+  $("mi-all").onclick = function () {
+    var nowK = key(new Date()), gone = [];
+    missedDays().forEach(function (day) { day.ts.forEach(function (t) { var g = takeOut(day.k, t.id); if (g) { gone.push({ k: day.k, i: g.i, t: g.t }); push(nowK, g.t); } }); });
+    if (!gone.length) return;
+    save(); closeMissed(); render(); renderOver();
+    offerUndo(gone.length + " FLYTTADE TILL IDAG", function () {
+      gone.slice().reverse().forEach(function (g) { var b = takeOut(nowK, g.t.id); if (b) insertAt(g.k, g.i, b.t); });
+    });
+  };
+  swipeDown(document.querySelector("#missed .panel"), closeMissed);
 
   /* ---------- lägg till ---------- */
   var addKey = null, addFrom = "plan", addTime = "";
@@ -1176,7 +1232,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    if (!$("party").hidden) endParty(); else if (!$("recap").hidden) closeRecap(); else if (!$("edit").hidden) closeEdit(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
+    if (!$("party").hidden) endParty(); else if (!$("recap").hidden) closeRecap(); else if (!$("edit").hidden) closeEdit(); else if (!$("missed").hidden) closeMissed(); else if (!$("settings").hidden) closeSettings(); else if (!cal.hidden) closeCal(); else if (!$("s-add").hidden) closeAdd();
   });
 
   /* ---------- figur: a 9x9 dot-matrix companion next to the name ----------
@@ -1428,7 +1484,7 @@
     if (nk !== todayKey) {
       var wasCurrent = key(weekStart) === key(mondayOf(fromKey(todayKey)));
       todayKey = nk;
-      if (wasCurrent) { weekStart = mondayOf(new Date()); openKey = firstMissedOr(todayKey); }
+      if (wasCurrent) { weekStart = mondayOf(new Date()); openKey = todayKey; }
       render(); if (!$("s-add").hidden) renderAdd();
     }
     if (!$("s-over").hidden) renderOver();
